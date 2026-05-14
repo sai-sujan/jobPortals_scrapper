@@ -935,8 +935,7 @@ HTML = r"""<!doctype html>
         <div class="judge-panel" id="judgePanel">
           <h3>Judge Group Apply</h3>
           <div class="buttons">
-            <button class="secondary" id="judgeFill">Fill Judge</button>
-            <button class="danger" id="judgeSubmit">Submit Judge</button>
+            <button class="secondary" id="judgeFill">Fill & Submit Latest</button>
           </div>
           <details>
             <summary>Applicant Settings</summary>
@@ -1163,7 +1162,7 @@ HTML = r"""<!doctype html>
           <td>
             <div class="button-row">
               <button class="small" data-open="${v.slug}">Open</button>
-              ${v.slug === "judgegroup" ? '<button class="small secondary" data-judge-fill>Fill</button><button class="small danger" data-judge-submit>Submit</button>' : ""}
+              ${v.slug === "judgegroup" ? '<button class="small secondary" data-judge-fill>Fill & Submit Latest</button>' : ""}
             </div>
           </td>
         </tr>
@@ -1172,10 +1171,7 @@ HTML = r"""<!doctype html>
         button.addEventListener("click", () => openPortal(button.dataset.open));
       });
       document.querySelectorAll("[data-judge-fill]").forEach((button) => {
-        button.addEventListener("click", () => judgeApply(false));
-      });
-      document.querySelectorAll("[data-judge-submit]").forEach((button) => {
-        button.addEventListener("click", () => judgeApply(true));
+        button.addEventListener("click", () => judgeApply());
       });
       document.querySelectorAll(".pick").forEach((box) => {
         box.addEventListener("change", () => {
@@ -1321,17 +1317,16 @@ HTML = r"""<!doctype html>
       $("log").textContent = applied ? "Marked applied. This mark will clear automatically after 2 hours." : "Applied mark cleared.";
     }
 
-    async function judgeApply(submit) {
-      if (submit && !confirm("Submit the selected Judge Group application now?")) return;
+    async function judgeApply() {
       await saveConfig();
       const payload = {
-        submit,
-        start_at: Number($("startAt").value || 1),
+        submit: true,
+        start_at: 1,
         keep_open_seconds: Number($("judgeKeepOpen").value || 45),
       };
       const data = await api("/api/judge-apply", { method: "POST", body: JSON.stringify(payload) });
-      $("log").textContent = `${submit ? "Submitting" : "Filling"} Judge Group application: ${data.title || data.job_url}`;
-      if (submit) await loadSelectedJobs();
+      $("log").textContent = `Filling and submitting latest Judge Group application: ${data.title || data.job_url}`;
+      await loadSelectedJobs();
     }
 
     $("save").addEventListener("click", saveConfig);
@@ -1359,8 +1354,7 @@ HTML = r"""<!doctype html>
     ["openLimit", "startAt"].forEach((id) => {
       $(id).addEventListener("change", () => loadSelectedJobs());
     });
-    $("judgeFill").addEventListener("click", () => judgeApply(false));
-    $("judgeSubmit").addEventListener("click", () => judgeApply(true));
+    $("judgeFill").addEventListener("click", () => judgeApply());
     setInterval(refreshStatus, 5000);
     refresh().catch((error) => { $("log").textContent = error.message; });
 
