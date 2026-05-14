@@ -1,0 +1,175 @@
+owner: Candidate
+resume_file: resume.docx
+timezone: America/New_York
+matching:
+  best_match_min_score: 45
+  borderline_min_score: 18
+  must_have_any:
+    - python
+    - software engineer
+    - software developer
+    - backend
+    - api
+    - data engineer
+    - cloud engineer
+    - sql
+    - ai
+    - django
+    - django rest framework
+    - fastapi
+    - flask
+    - openai
+    - langchain
+    - llm
+    - rag
+    - generative ai
+    - gen ai
+    - machine learning
+    - ai/ml
+    - embeddings
+    - vector search
+  strong_terms:
+    backend:
+      weight: 7
+      terms:
+        - python
+        - django
+        - django rest framework
+        - drf
+        - fastapi
+        - flask
+        - rest api
+        - restful api
+        - microservices
+        - backend
+        - sqlalchemy
+        - pydantic
+        - api gateway
+    ai_ml:
+      weight: 8
+      terms:
+        - llm
+        - rag
+        - openai api
+        - openai
+        - langchain
+        - prompt engineering
+        - embeddings
+        - faiss
+        - vector search
+        - semantic search
+        - scikit-learn
+        - sklearn
+        - machine learning
+        - generative ai
+        - gen ai
+    data:
+      weight: 5
+      terms:
+        - etl
+        - data ingestion
+        - batch processing
+        - pandas
+        - numpy
+        - json
+        - xml
+        - beautifulsoup
+        - lxml
+        - redshift
+        - dynamodb
+        - mongodb
+        - redis
+        - postgresql
+        - mysql
+    cloud_devops:
+      weight: 4
+      terms:
+        - aws
+        - ec2
+        - s3
+        - lambda
+        - rds
+        - sqs
+        - eventbridge
+        - cloudwatch
+        - azure
+        - azure app service
+        - azure vm
+        - azure blob storage
+        - azure sql
+        - azure devops
+        - gcp
+        - google app engine
+        - docker
+        - jenkins
+        - ci/cd
+        - linux
+        - gunicorn
+        - nginx
+        - uvicorn
+  seniority_boost:
+    weight: 12
+    terms:
+      - senior
+      - sr
+      - lead
+      - principal
+      - staff
+      - architect
+      - 8+
+      - 9+
+      - 10+
+  contract_boost:
+    weight: 14
+    terms:
+      - c2c
+      - corp-to-corp
+      - corp to corp
+  unknown_type_penalty: -7
+  exclusions:
+    - recruiter
+    - recruiting
+    - sales
+    - account manager
+    - business development
+    - junior
+    - intern
+    - internship
+    - helpdesk
+    - help desk
+    - desktop support
+    - qa only
+    - quality assurance
+    - frontend only
+    - front-end only
+    - java developer
+    - java engineer
+    - java architect
+    - java backend
+    - java software
+    - java full stack
+    - java fullstack
+    - full stack java
+    - fullstack java
+    - senior java
+    - sr java
+    - .net developer
+    - dotnet developer
+    - full-time
+    - full time
+    - full_time
+    - permanent
+    - direct hire
+    - w2
+    - w-2
+    - contract-to-hire
+    - contract to hire
+    - c2h
+    - no c2c
+    - account login
+    - jobseeker
+    - jobs & careers
+    - jobs and careers
+    - welcome to careers
+    - careers at
+    - energy transition

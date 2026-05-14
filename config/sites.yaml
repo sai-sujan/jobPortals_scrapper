@@ -1,0 +1,2149 @@
+run:
+  request_timeout_seconds: 20
+  sleep_between_requests_seconds: 1.0
+  max_detail_pages_per_site: 30
+  parallel_workers: 4
+  max_site_duration_seconds: 300
+  priority_max_site_duration_seconds: 1200
+  slow_site_threshold_seconds: 900
+  slow_site_minimum_runs: 1
+  usa_only: true
+  usa_search_suffix: United States
+  c2c_only: true
+  c2c_mode: compatible_review
+  search_terms:
+  - python
+  - python developer
+  - python engineer
+  - backend python
+  - software engineer python
+  - django developer
+  - fastapi developer
+  - flask developer
+  - api developer
+  - rest api developer
+  - data engineer
+  - data engineer python
+  - etl developer
+  - sql python
+  - aws python
+  - azure python
+  - machine learning engineer
+  - ai engineer
+  - llm engineer
+  - generative ai engineer
+  - gen ai
+  - rag engineer
+  - langchain developer
+  - openai developer
+  - python c2c
+  - python corp to corp
+  - data engineer c2c
+  - machine learning c2c
+sites:
+- name: TEKsystems
+  group: core
+  priority: true
+  base_url: https://www.teksystems.com
+  adapter: generic
+  search_url_templates:
+  - https://careers.teksystems.com/us/en/search-results/1000?keywords={query}
+  - https://careers.teksystems.com/us/en/search-results?keywords={query}
+- name: Apex Systems
+  group: core
+  priority: true
+  base_url: https://www.apexsystems.com
+  adapter: generic
+  search_url_templates:
+  - https://www.apexsystems.com/job-search-results?keywords={query}
+  - https://www.apexsystems.com/careers/search-jobs-apex?keywords={query}
+- name: The Judge Group
+  group: core
+  priority: true
+  base_url: https://www.judge.com
+  adapter: generic
+  search_url_templates:
+  - https://www.judge.com/jobs/?keyword={query}
+  - https://www.judge.com/jobs/?search={query}
+- name: Beacon Hill Staffing Group
+  group: core
+  priority: true
+  base_url: https://www.beaconhillstaffing.com
+  adapter: generic
+  search_url_templates:
+  - https://jobs.beaconhillstaffing.com/jobs/?search={query}
+  - https://jobs.beaconhillstaffing.com/jobs/?keywords={query}
+- name: Akkodis
+  group: core
+  priority: true
+  base_url: https://www.akkodis.com
+  adapter: akkodis
+  search_url_templates:
+  - https://www.akkodis.com/en-us/careers/job-results?k={query}
+- name: Randstad
+  group: core
+  priority: true
+  base_url: https://www.randstad.com
+  adapter: generic
+  search_url_templates:
+  - https://www.randstadusa.com/jobs/q-{query}/
+  - https://www.randstad.com/jobs/q-{query}/
+- name: Eliassen Group
+  group: core
+  priority: true
+  base_url: https://careers.eliassen.com
+  adapter: atom
+  feed_urls:
+  - https://careers.eliassen.com/feeds/jobs.atom
+  search_url_templates:
+  - https://careers.eliassen.com/q/{query}
+- name: Experis
+  group: core
+  priority: true
+  base_url: https://www.experis.com
+  adapter: generic
+  search_url_templates:
+  - https://www.experis.com/en/all-jobs?keywords={query}
+  - https://www.experis.com/en/job-search?keywords={query}
+- name: Brooksource
+  group: core
+  priority: true
+  base_url: https://www.brooksource.com
+  adapter: generic
+  search_url_templates:
+  - https://www.brooksource.com/jobs?keywords={query}
+  - https://www.brooksource.com/careers?keywords={query}
+- name: KellyMitchell Group
+  group: core
+  priority: true
+  base_url: https://www.careers.kellymitchell.com
+  adapter: generic
+  search_url_templates:
+  - https://www.careers.kellymitchell.com/jobs?query={query}
+  - https://www.careers.kellymitchell.com/jobs#/{query}
+- name: Mitchell Martin Inc.
+  group: core
+  priority: true
+  base_url: https://www.mitchellmartin.com
+  adapter: generic
+  search_url_templates:
+  - https://www.mitchellmartin.com/careers/job-search?keywords={query}
+  - https://www.mitchellmartin.com/jobs?keywords={query}
+- name: CBTS
+  group: core
+  priority: true
+  base_url: https://www.cbts.com
+  adapter: generic
+  search_url_templates:
+  - https://www.cbts.com/careers/?search={query}
+  - https://www.cbts.com/jobs/?search={query}
+- name: Robert Half
+  group: core
+  priority: true
+  base_url: https://www.roberthalf.com
+  adapter: generic
+  search_url_templates:
+  - https://www.roberthalf.com/us/en/jobs/all/{query}
+  - https://www.roberthalf.com/us/en/jobs?keywords={query}
+- name: Kforce
+  group: core
+  priority: true
+  base_url: https://www.kforce.com
+  adapter: generic
+  search_url_templates:
+  - https://www.kforce.com/search-jobs/?q={query}
+  - https://www.kforce.com/search-jobs/?keywords={query}
+- name: Insight Global
+  group: core
+  priority: true
+  base_url: https://jobs.insightglobal.com
+  adapter: generic
+  search_url_templates:
+  - https://jobs.insightglobal.com/find_a_job/?keyword={query}
+  - https://careers.insightglobal.com/jobs?keyword={query}
+- name: Aerotek
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.aerotek.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.aerotek.com
+  - http://www.aerotek.com/
+- name: Brilliantfs
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.brilliantfs.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.brilliantfs.com
+  - http://www.brilliantfs.com/
+- name: Gesnetwork
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.gesnetwork.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.gesnetwork.com
+  - http://www.gesnetwork.com/
+- name: Peaktechnical
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.peaktechnical.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.peaktechnical.com
+  - http://www.peaktechnical.com/
+- name: Accruepartners
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.accruepartners.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.accruepartners.com
+  - http://www.accruepartners.com/
+- name: Planet Technology
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.planet-technology.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.planet-technology.com/
+- name: Addisongroup
+  group: prime_vendor_import
+  priority: false
+  base_url: https://addisongroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://addisongroup.com/jobs/
+- name: Motionrecruitment
+  group: prime_vendor_import
+  priority: false
+  base_url: https://motionrecruitment.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://motionrecruitment.com/tech-jobs
+- name: Matrixres
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.matrixres.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.matrixres.com/
+- name: Sni Companies
+  group: prime_vendor_import
+  priority: false
+  base_url: https://sni-companies.jobs.net
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://sni-companies.jobs.net/
+- name: Snicompanies
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.snicompanies.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.snicompanies.com/
+- name: Abacusgrpllc
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.abacusgrpllc.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.abacusgrpllc.com
+  - http://www.abacusgrpllc.com/
+- name: Sparksgroupinc
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.sparksgroupinc.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.sparksgroupinc.com
+  - http://www.sparksgroupinc.com/
+- name: Ultimatestaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.ultimatestaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.ultimatestaffing.com/
+- name: Ultimatestaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.ultimatestaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.ultimatestaffing.com/
+- name: Incendia
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.incendia.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.incendia.com
+  - http://www.incendia.com/
+- name: Trcstaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.trcstaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.trcstaffing.com
+  - http://www.trcstaffing.com/
+- name: Trnstaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.trnstaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.trnstaffing.com/apply-for-jobs/
+- name: Executeam
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.executeam.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.executeam.com/
+- name: Belcanjobs
+  group: prime_vendor_import
+  priority: false
+  base_url: https://belcanjobs.smartsearchonline.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://belcanjobs.smartsearchonline.com/careersv2/process_jobsearch.asp
+- name: Belcan
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.belcan.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.belcan.com/
+- name: Tekpartners
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.tekpartners.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.tekpartners.com
+  - http://www.tekpartners.com/
+- name: Edgelink
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.edgelink.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.edgelink.com
+  - http://www.edgelink.com/
+- name: Bgsf
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.bgsf.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.bgsf.com/jobsearch?_gl=1*gn0kry*_gcl_au*NDI1MzIxMzQ1LjE3MTgwNDE2NTY.&_ga=2.120096715.2109288631.1718319769-228587373.1718041656
+- name: Smartstaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.smartstaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.smartstaffing.com/
+- name: Aquenttalent
+  group: prime_vendor_import
+  priority: false
+  base_url: https://aquenttalent.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://aquenttalent.com/talent/jobs
+- name: Vitamintalent
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.vitamintalent.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.vitamintalent.com/
+- name: Optechus
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.optechus.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.optechus.com
+  - http://www.optechus.com/
+- name: Bakertilly
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.bakertilly.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.bakertilly.com/jobs
+- name: Bakertilly
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.bakertilly.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.bakertilly.com/
+- name: Protingent
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.protingent.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.protingent.com
+  - http://www.protingent.com/
+- name: Nescoresource
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.nescoresource.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.nescoresource.com
+  - http://www.nescoresource.com/
+- name: Eliassen
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.eliassen.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.eliassen.com/
+- name: Daviscos
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.daviscos.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.daviscos.com
+  - http://www.daviscos.com/
+- name: Staffing The Universe
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.staffing-the-universe.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.staffing-the-universe.com
+  - http://www.staffing-the-universe.com/
+- name: Medixteam
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.medixteam.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.medixteam.com
+  - http://www.medixteam.com/
+- name: Consultnet
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.consultnet.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.consultnet.com
+  - http://www.consultnet.com/
+- name: Vanderhouwen
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.vanderhouwen.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.vanderhouwen.com
+  - http://www.vanderhouwen.com/
+- name: Bettsrecruiting
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.bettsrecruiting.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.bettsrecruiting.com
+  - http://www.bettsrecruiting.com/
+- name: Smci
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.smci.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.smci.com
+  - http://www.smci.com/
+- name: Thehtgroup
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.thehtgroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.thehtgroup.com
+  - http://www.thehtgroup.com/
+- name: Airswift
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.airswift.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.airswift.com
+  - http://www.airswift.com/
+- name: Futurestep
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.futurestep.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.futurestep.com
+  - http://www.futurestep.com/
+- name: Systemoneservices
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.systemoneservices.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.systemoneservices.com
+  - http://www.systemoneservices.com/
+- name: Hired
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.hired.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.hired.com
+  - http://www.hired.com/
+- name: Xfiregroup
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.xfiregroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.xfiregroup.com
+  - http://www.xfiregroup.com/
+- name: Kellyservices
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.kellyservices.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.kellyservices.com
+  - http://www.kellyservices.com/
+- name: Mrinetwork
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.mrinetwork.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.mrinetwork.com
+  - http://www.mrinetwork.com/
+- name: Mondo
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.mondo.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.mondo.com
+  - http://www.mondo.com/
+- name: Manpower
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.manpower.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.manpower.com
+  - http://www.manpower.com/
+- name: Syndicatebleu
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.syndicatebleu.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.syndicatebleu.com
+  - http://www.syndicatebleu.com/
+- name: Masonfrank
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.masonfrank.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.masonfrank.com
+  - http://www.masonfrank.com/
+- name: Thecsicompanies
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.thecsicompanies.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.thecsicompanies.com
+  - http://www.thecsicompanies.com/
+- name: Modis
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.modis.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.modis.com
+  - http://www.modis.com/
+- name: Spencerstuart
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.spencerstuart.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.spencerstuart.com/who-we-are/careers-paths
+  - http://www.spencerstuart.com/
+- name: Talascend
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.talascend.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.talascend.com
+  - http://www.talascend.com/
+- name: Yoh
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.yoh.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.yoh.com
+  - http://www.yoh.com/
+- name: Execu Search
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.execu-search.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.execu-search.com
+  - http://www.execu-search.com/
+- name: Harveynash
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.harveynash.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.harveynash.com
+  - http://www.harveynash.com/
+- name: Reactionsearch
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.reactionsearch.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.reactionsearch.com
+  - http://www.reactionsearch.com/
+- name: Michaelpage
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.michaelpage.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.michaelpage.com
+  - http://www.michaelpage.com/
+- name: Onwardsearch
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.onwardsearch.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.onwardsearch.com
+  - http://www.onwardsearch.com/
+- name: Idr Inc
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.idr-inc.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.idr-inc.com
+  - http://www.idr-inc.com/
+- name: Vincentbenjamin
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.vincentbenjamin.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.vincentbenjamin.com
+  - http://www.vincentbenjamin.com/
+- name: Specialcounsel
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.specialcounsel.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.specialcounsel.com
+  - http://www.specialcounsel.com/
+- name: Greenkeyllc
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.greenkeyllc.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.greenkeyllc.com
+  - http://www.greenkeyllc.com/
+- name: Csi Executivesearch
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.csi-executivesearch.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.csi-executivesearch.com
+  - http://www.csi-executivesearch.com/
+- name: Cfstaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.cfstaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.cfstaffing.com
+  - http://www.cfstaffing.com/
+- name: Prestigestaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.prestigestaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.prestigestaffing.com
+  - http://www.prestigestaffing.com/
+- name: Vaco
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.vaco.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.vaco.com
+  - http://www.vaco.com/
+- name: Solomonpage
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.solomonpage.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.solomonpage.com
+  - http://www.solomonpage.com/
+- name: Matlensilver
+  group: prime_vendor_import
+  priority: false
+  base_url: https://matlensilver.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://matlensilver.com/jobs/
+- name: Creativecircle
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.creativecircle.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.creativecircle.com
+  - http://www.creativecircle.com/
+- name: Teambradley
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.teambradley.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.teambradley.com
+  - http://www.teambradley.com/
+- name: Elitepersonnel
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.elitepersonnel.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.elitepersonnel.com
+  - http://www.elitepersonnel.com/
+- name: Collabera
+  group: prime_vendor_import
+  priority: false
+  base_url: https://collabera.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://collabera.com/job-search/
+- name: Contemporarystaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.contemporarystaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.contemporarystaffing.com
+  - http://www.contemporarystaffing.com/
+- name: Infinity Cs
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.infinity-cs.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.infinity-cs.com
+  - http://www.infinity-cs.com/
+- name: Synergishr
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.synergishr.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.synergishr.com
+  - http://www.synergishr.com/
+- name: Sterling Engineering
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.sterling-engineering.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.sterling-engineering.com
+  - http://www.sterling-engineering.com/
+- name: Appleone
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.appleone.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.appleone.com
+  - http://www.appleone.com/
+- name: Accessstaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.accessstaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.accessstaffing.com
+  - http://www.accessstaffing.com/
+- name: Heitmeyerconsulting
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.heitmeyerconsulting.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.heitmeyerconsulting.com
+  - http://www.heitmeyerconsulting.com/
+- name: Tricomts
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.tricomts.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.tricomts.com
+  - http://www.tricomts.com/
+- name: Rharecruiters
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.rharecruiters.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.rharecruiters.com
+  - http://www.rharecruiters.com/
+- name: Talonpro
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.talonpro.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.talonpro.com
+  - http://www.talonpro.com/
+- name: Approfessionals
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.approfessionals.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.approfessionals.com
+  - http://www.approfessionals.com/
+- name: Bachrachgroup
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.bachrachgroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.bachrachgroup.com
+  - http://www.bachrachgroup.com/
+- name: Cps4jobs
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.cps4jobs.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.cps4jobs.com/
+- name: Cps4jobs
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.cps4jobs.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.cps4jobs.com/
+- name: Worldbridgepartners
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.worldbridgepartners.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.worldbridgepartners.com
+  - http://www.worldbridgepartners.com/
+- name: Whitridge
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.whitridge.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.whitridge.com
+  - http://www.whitridge.com/
+- name: Thompsontechnologies
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.thompsontechnologies.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.thompsontechnologies.com
+  - http://www.thompsontechnologies.com/
+- name: Inceed
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.inceed.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.inceed.com
+  - http://www.inceed.com/
+- name: Bowdoingroup
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.bowdoingroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.bowdoingroup.com
+  - http://www.bowdoingroup.com/
+  - https://www.bowdoingroup.com/careers/apply-now/
+- name: Insightrecruiting
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.insightrecruiting.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.insightrecruiting.com
+  - http://www.insightrecruiting.com/
+- name: 4cornerresources
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.4cornerresources.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.4cornerresources.com
+  - http://www.4cornerresources.com/
+- name: Syllogisteks
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.syllogisteks.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.syllogisteks.com
+  - http://www.syllogisteks.com/
+- name: Staffsmart
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.staffsmart.net
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.staffsmart.net
+  - http://www.staffsmart.net/
+- name: Ctsna
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.ctsna.ca
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.ctsna.ca
+  - http://www.ctsna.ca/
+- name: Ceiamerica
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.ceiamerica.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.ceiamerica.com
+  - http://www.ceiamerica.com/
+- name: Ctpconsulting
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.ctpconsulting.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.ctpconsulting.com/job-seekers/search/
+  - http://www.ctpconsulting.com/claritystaffing.com
+- name: Arrowstrategies
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.arrowstrategies.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.arrowstrategies.com
+  - http://www.arrowstrategies.com/
+- name: Resourceacctg
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.resourceacctg.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.resourceacctg.com
+  - http://www.resourceacctg.com/
+- name: Hightechpros
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.hightechpros.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.hightechpros.com
+  - http://www.hightechpros.com/
+- name: Prcstaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.prcstaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.prcstaffing.com
+  - http://www.prcstaffing.com/
+- name: Realstaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.realstaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.realstaffing.com
+  - http://www.realstaffing.com/
+- name: Highcountrysearch
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.highcountrysearch.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.highcountrysearch.com
+  - http://www.highcountrysearch.com/
+- name: Oxfordcorp
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.oxfordcorp.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.oxfordcorp.com
+  - http://www.oxfordcorp.com/
+- name: Kore1
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.kore1.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.kore1.com/
+- name: Overturepartners
+  group: prime_vendor_import
+  priority: false
+  base_url: http://overturepartners.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://overturepartners.com
+  - http://overturepartners.com/
+- name: Lrsconsultingservices
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.lrsconsultingservices.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.lrsconsultingservices.com/
+- name: Lrs
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.lrs.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.lrs.com/
+- name: M9solutions
+  group: prime_vendor_import
+  priority: false
+  base_url: https://m9solutions.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://m9solutions.com/career/
+  - http://www.m9solutions.com/
+- name: Ashleyellis
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.ashleyellis.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.ashleyellis.com
+  - http://www.ashleyellis.com/
+- name: Synergystaffing
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.synergystaffing.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.synergystaffing.com/
+- name: Jacobsononline
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.jacobsononline.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.jacobsononline.com
+  - http://www.jacobsononline.com/
+- name: Lumen
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.lumen.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.lumen.com/global/en
+- name: Sealconsult
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.sealconsult.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.sealconsult.com/careers/
+- name: Anchorpointtr
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.anchorpointtr.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.anchorpointtr.com
+  - http://www.anchorpointtr.com/
+- name: Resolvit
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.resolvit.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.resolvit.com
+  - http://www.resolvit.com/
+- name: Stonehengeresources
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.stonehengeresources.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.stonehengeresources.com
+  - http://www.stonehengeresources.com/
+- name: Synigent
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.synigent.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.synigent.com
+  - http://www.synigent.com/
+- name: Moorecroft
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.moorecroft.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.moorecroft.com
+  - http://www.moorecroft.com/
+- name: Hbbq
+  group: prime_vendor_import
+  priority: false
+  base_url: https://hbbq.fa.us2.oraclecloud.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://hbbq.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1
+- name: Abs Group
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.abs-group.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.abs-group.com/
+- name: Vitalsourceit
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.vitalsourceit.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.vitalsourceit.com
+  - http://www.vitalsourceit.com/
+- name: Culturefit
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.culturefit.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.culturefit.com/
+- name: Culturefit
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.culturefit.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.culturefit.com/
+- name: Hpe
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.hpe.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.hpe.com/us/en/search-results
+- name: Hpe
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.hpe.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.hpe.com/
+- name: Wimmersolutions
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.wimmersolutions.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.wimmersolutions.com
+  - http://www.wimmersolutions.com/
+- name: Iriscc
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.iriscc.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.iriscc.com
+  - http://www.iriscc.com/
+- name: Stgit
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.stgit.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.stgit.com
+  - http://www.stgit.com/
+- name: Pierce
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.pierce.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.pierce.com/
+- name: Traust
+  group: prime_vendor_import
+  priority: false
+  base_url: https://traust.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://traust.com/about/careers/
+  - http://www.traust.com/
+- name: Careworkstech
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.careworkstech.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.careworkstech.com/
+- name: 1872consulting
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.1872consulting.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.1872consulting.com/
+- name: Hirewell
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.hirewell.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.hirewell.com/
+- name: Pritechnology
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.pritechnology.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.pritechnology.com
+  - http://www.pritechnology.com/
+- name: Vantagelinks
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.vantagelinks.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.vantagelinks.com/
+- name: Packback
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.packback.co
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.packback.co/about/careers/
+  - https://www.packback.co/
+- name: Protekpartners
+  group: prime_vendor_import
+  priority: false
+  base_url: https://protekpartners.my.salesforce-sites.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://protekpartners.my.salesforce-sites.com/careers
+- name: Protekpartners
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.protekpartners.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.protekpartners.com/
+- name: Talentbridge
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.talentbridge.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.talentbridge.com/
+- name: 3m
+  group: prime_vendor_import
+  priority: false
+  base_url: https://3m.wd1.myworkdayjobs.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://3m.wd1.myworkdayjobs.com/en-US/Search
+- name: 3m
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.3m.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.3m.com/careers
+- name: Ipponusa
+  group: prime_vendor_import
+  priority: false
+  base_url: https://ipponusa.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://ipponusa.com/careers/
+- name: Ippon
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.ippon.tech
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.ippon.tech/
+- name: Smart Synergies
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.smart-synergies.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.smart-synergies.com/
+- name: Theceigroup
+  group: prime_vendor_import
+  priority: false
+  base_url: https://theceigroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://theceigroup.com/candidates/view-jobs/
+  - http://www.theceigroup.com/
+- name: Jvtadvisors
+  group: prime_vendor_import
+  priority: false
+  base_url: http://jvtadvisors.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://jvtadvisors.com
+  - http://jvtadvisors.com/
+- name: Neosconsulting
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.neosconsulting.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.neosconsulting.com
+  - http://www.neosconsulting.com/
+- name: Gdt
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.gdt.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.gdt.com/
+- name: Redoaktech
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.redoaktech.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.redoaktech.com/
+- name: Royalandross
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.royalandross.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.royalandross.com/
+- name: Moserit
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.moserit.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.moserit.com/
+- name: Taos
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.taos.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.taos.com/
+- name: Odesus
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.odesus.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.odesus.com/
+- name: Equisdifference
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.equisdifference.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.equisdifference.com/
+- name: Technologynavigators
+  group: prime_vendor_import
+  priority: false
+  base_url: https://technologynavigators.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://technologynavigators.com/
+- name: Imcsgroup
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.imcsgroup.net
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.imcsgroup.net/
+- name: J Galt
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.j-galt.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.j-galt.com
+  - http://www.j-galt.com/
+- name: Newline Interactive
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.newline-interactive.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.newline-interactive.com/
+- name: Messinatalentadvisors
+  group: prime_vendor_import
+  priority: false
+  base_url: https://messinatalentadvisors.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://messinatalentadvisors.com/submit-your-resume/
+- name: Csarecruiters
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.csarecruiters.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.csarecruiters.com
+  - http://www.csarecruiters.com/
+- name: Sracareers
+  group: prime_vendor_import
+  priority: false
+  base_url: https://sracareers.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://sracareers.com/apply/
+- name: Alliancenetworkscorp
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.alliancenetworkscorp.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.alliancenetworkscorp.com/
+- name: Www2
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www2.jobdiva.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www2.jobdiva.com/portal/?a=lmjdnwstygivzwlr4davpil0fjeac503f5em529l58yp19ouif1l5b73opy9iwzs&compid=0#/
+  - https://www2.jobdiva.com/portal/?a=lmjdnwstygivzwlr4davpil0fjeac503f5em529l58yp19ouif1l5b73opy9iwzs&compid=0
+  - https://www2.jobdiva.com/portal/?a=kqjdnwh39ztiohxwy1rfthjqmxh2uz01b8uqbh1m6ld6xl97ybsvanx1jwcd5656&compid=0&amp
+- name: Volt
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.volt.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.volt.com/us/en/search-results?keywords=data
+- name: Contech It
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.contech-it.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.contech-it.com/job-seekers
+- name: Cybercoders
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.cybercoders.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.cybercoders.com/careers/
+- name: Thelasallenetwork
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.thelasallenetwork.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.thelasallenetwork.com/job-search/
+- name: Ledgenttech
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.ledgenttech.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.ledgenttech.com/
+- name: Opensystemstech
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.opensystemstech.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.opensystemstech.com/search
+- name: Point72
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.point72.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.point72.com/?
+- name: Mindbank
+  group: prime_vendor_import
+  priority: false
+  base_url: https://mindbank.jobs.net
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://mindbank.jobs.net/jobs?keywords=java&location=
+- name: Selectgroup
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.selectgroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.selectgroup.com/career-seekers/careers/
+- name: Sgainc
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.sgainc.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.sgainc.com/careers/job-openings/
+- name: Sharpdecisions
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.sharpdecisions.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.sharpdecisions.com/careers
+- name: Sta Worldwide
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.sta-worldwide.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.sta-worldwide.com/find-a-job.html
+- name: Stoneresource
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.stoneresource.net
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.stoneresource.net/
+- name: Talgroup
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.talgroup.net
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.talgroup.net/jobseekers/
+- name: Tandymgroup
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.tandymgroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.tandymgroup.com/jobs
+- name: Theprincetongroup
+  group: prime_vendor_import
+  priority: false
+  base_url: https://theprincetongroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://theprincetongroup.com/jobs/search-results?keyword=java&location=
+- name: Vdart
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.vdart.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.vdart.com/careers/current-opportunities/
+- name: Visionairepartners
+  group: prime_vendor_import
+  priority: false
+  base_url: https://visionairepartners.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://visionairepartners.com/jobs/
+- name: Vsoftconsulting
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.vsoftconsulting.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.vsoftconsulting.com/career-portal
+- name: Career
+  group: prime_vendor_import
+  priority: false
+  base_url: https://career.tekdoors.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://career.tekdoors.com/jobs/
+- name: Ctg
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.ctg.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.ctg.com/NAhttps://www.computerfutures.com/en-us/https://clearpointco.com/employee/job-search/
+  - https://careers.ctg.com/NA
+- name: Elevano
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.elevano.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.elevano.com/careers/13401-Generalhttps://www.selectgroup.com/career-seekers/careers/https://www2.jobdiva.com/portal/?a=5zjdnwgz9rgt98nybpazqo8bw8rfbl00caqs4j4fd2bztzkfucovot2hjp1hm9he&compid=0#/https://www.chiptonross.com/https://www.job4tech.com/https://stratustech.com/consulting-opportunities/http://careerportal.compri.com/#/jobshttps://www.venturefizz.com/jobs/network-engineer-at-american-well-boston-mahttps://techexpousa.com/#searchjobshttp://arithmica.com/careers.phphttp://www.libertyjobs.com/
+  - https://jobs.elevano.com/careers/13401-General
+- name: Capgroup
+  group: prime_vendor_import
+  priority: false
+  base_url: https://capgroup.wd1.myworkdayjobs.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://capgroup.wd1.myworkdayjobs.com/en-US/capitalgroupcareers?q=Java
+- name: Sescorporation
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.sescorporation.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.sescorporation.com/careers.html
+- name: Freddiemac
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.freddiemac.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.freddiemac.com/us/en/search-results?m=3&keywords=Java
+- name: Yorksolutions
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.yorksolutions.net
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.yorksolutions.net/yorkjobs_york3.asp
+- name: Kpmg
+  group: prime_vendor_import
+  priority: false
+  base_url: https://kpmg.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://kpmg.com/xx/en/home/careers-at-kpmg/job-search.htmlhttps://www.roseint.com/hotjobs/JobsSearch.aspxhttps://tsrconsulting.com/job-finder/https://www2.jobdiva.com/portal/?a=5delfm2w02kdz96ddkjpqyt3nasfne263bfkmdie3nca0fngmx53d9e56r334w4few#/https://www.gssinfotech.com/careers/
+- name: Employinc
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.employinc.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.employinc.com/?utm_medium=online_referral&utm_source=other&utm_campaign=job-seeker-page
+- name: Allstemconnections
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.allstemconnections.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.allstemconnections.com/CareerSearch
+- name: Motusrecruiting
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.motusrecruiting.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.motusrecruiting.com
+  - http://www.motusrecruiting.com/
+- name: Spectraforce
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.spectraforce.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.spectraforce.com
+  - http://www.spectraforce.com/
+- name: Jbc
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jbc.team
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jbc.team/jobs/
+- name: Jbcstyle
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.jbcstyle.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.jbcstyle.com/
+- name: Onassignment
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.onassignment.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.onassignment.com
+  - http://www.onassignment.com/
+- name: Crawfordthomas
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.crawfordthomas.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.crawfordthomas.com
+  - http://www.crawfordthomas.com/
+- name: Prg Usa
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.prg-usa.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.prg-usa.com
+  - http://www.prg-usa.com/
+- name: Populusgroup
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.populusgroup.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.populusgroup.com
+  - http://www.populusgroup.com/
+- name: Appliedrg
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.appliedrg.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.appliedrg.com
+  - http://www.appliedrg.com/
+- name: Cvent
+  group: prime_vendor_import
+  priority: false
+  base_url: http://www.cvent.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - http://www.cvent.com/
+- name: Dexian
+  group: prime_vendor_import
+  priority: false
+  base_url: https://dexian.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://dexian.com/jobs/
+- name: Insidetrack
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.insidetrack.org
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.insidetrack.org/careers
+- name: Ibegin
+  group: prime_vendor_import
+  priority: false
+  base_url: https://ibegin.tcs.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://ibegin.tcs.com/iBegin/jobs/search
+- name: Cognizant
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.cognizant.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.cognizant.com/us-en/jobs/
+  - https://careers.cognizant.com/us-en/
+- name: Digitalcareers
+  group: prime_vendor_import
+  priority: false
+  base_url: https://digitalcareers.infosys.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://digitalcareers.infosys.com/infosys/global-careers?location=USA
+- name: Amazon
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.amazon.jobs
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.amazon.jobs/en/search?offset=0&result_limit=10&sort=relevant&country%5B%5D=USA&distanceType=Mi&radius=24km&latitude=&longitude=&loc_group_id=&loc_query=&base_query=&city=&country=&region=&county=&query_options=&
+- name: Avenuecode
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.avenuecode.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.avenuecode.com/open-positions/
+- name: Protagona
+  group: prime_vendor_import
+  priority: false
+  base_url: https://protagona.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://protagona.com/careers/
+- name: Pplweb
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.pplweb.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.pplweb.com/jobs
+- name: Friedkin
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.friedkin.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.friedkin.com/careers-home/jobs
+- name: Clearcompany
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.clearcompany.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.clearcompany.com/careers/#form_job
+  - https://www.clearcompany.com/careers/
+- name: Gcsagents
+  group: prime_vendor_import
+  priority: false
+  base_url: https://gcsagents.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://gcsagents.com/careers/
+- name: Comcast
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.comcast.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.comcast.com/search-jobs/data%20engineer/45483/1
+- name: Aexp
+  group: prime_vendor_import
+  priority: false
+  base_url: https://aexp.eightfold.ai
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://aexp.eightfold.ai/careers?pid=21442021&domain=aexp.com&sort_by=relevance&triggerGoButton=false
+- name: Ascendion
+  group: prime_vendor_import
+  priority: false
+  base_url: https://ascendion.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://ascendion.com/join-us/careers/
+- name: Virtusa
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.virtusa.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.virtusa.com/careers
+- name: Jll
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jll.wd1.myworkdayjobs.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jll.wd1.myworkdayjobs.com/jllcareers
+- name: Alku
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.alku.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.alku.com/openpositions/
+- name: Careers
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.careers.microsoft.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.careers.microsoft.com/global/en/search?q=data%20engineer&lc=United%20States&l=en_us&pg=1&pgSz=20&o=Relevance&flt=true&ulcs=false&ref=cms
+- name: Otsi Global
+  group: prime_vendor_import
+  priority: false
+  base_url: https://otsi-global.zohorecruit.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://otsi-global.zohorecruit.com/jobs/Careers
+- name: Impetus
+  group: prime_vendor_import
+  priority: false
+  base_url: https://impetus.openings.co
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://impetus.openings.co/#!/
+  - https://impetus.openings.co/
+- name: Portal
+  group: prime_vendor_import
+  priority: false
+  base_url: https://portal.procomservices.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://portal.procomservices.com/jobs?loginType=contractor&lang=en
+- name: Citi
+  group: prime_vendor_import
+  priority: false
+  base_url: https://jobs.citi.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://jobs.citi.com/
+- name: Wissen
+  group: prime_vendor_import
+  priority: false
+  base_url: https://www.wissen.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://www.wissen.com/career/opportunities-wissen-infotech-usa
+- name: Publicissapient
+  group: prime_vendor_import
+  priority: false
+  base_url: https://careers.publicissapient.com
+  adapter: generic
+  source_file: Prime vendor list(sunil) (1)(1)(AutoRecovered).xlsx
+  search_url_templates:
+  - https://careers.publicissapient.com/job-search?q=data%20engineer&country=United%20States

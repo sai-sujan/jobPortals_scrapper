@@ -1,0 +1,34 @@
+# macOS and editor/system files
+.DS_Store
+.claude/
+
+# Python runtime/cache files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local runtime data and generated reports
+data/
+logs/
+reports/
+**/output/
+**/.dashboard_terms.txt
+job_portal_dashboard_config.json
+
+# Personal documents and downloaded sheets
+*.docx
+*.xlsx
+~$*.xlsx
+Prime vendor list*.xlsx
+
+# Captured/debug web pages and screenshots
+*.html
+*.png
+
+# Local launch/build artifacts
+*.app/
+*.plist
