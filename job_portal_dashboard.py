@@ -700,9 +700,11 @@ HTML = r"""<!doctype html>
       const latest = state.runs[state.runs.length - 1];
       $("runState").textContent = latest ? latest.status : "idle";
       if (!latest) return;
-      const lines = [`Run ${latest.id} - ${latest.kind} - ${latest.status}`];
+      const freshNote = latest.kind === "today" ? "Fresh scrape from page/API start for today's 2 portals" : "Fresh scrape run";
+      const lines = [`Run ${latest.id} - ${latest.kind} - ${latest.status}`, freshNote];
       for (const step of latest.steps || []) {
-        lines.push(`${step.status.padEnd(7)} ${step.vendor}: ${step.count ?? 0} jobs`);
+        const countText = step.status === "running" ? "scraping from beginning..." : `${step.count ?? 0} jobs`;
+        lines.push(`${step.status.padEnd(7)} ${step.vendor}: ${countText}`);
         if (step.status === "failed" && step.output) lines.push(step.output);
       }
       $("log").textContent = lines.join("\n");
@@ -729,7 +731,9 @@ HTML = r"""<!doctype html>
     async function scrape(mode, vendors = []) {
       await saveConfig();
       await api("/api/scrape", { method: "POST", body: JSON.stringify({ mode, vendors }) });
-      $("log").textContent = "Scrape started. This can take a while for all 15 portals.";
+      $("log").textContent = mode === "today"
+        ? "Fresh scrape started for today's 2 portals from the beginning. Old counts remain visible until new output finishes."
+        : "Fresh scrape started. Old counts remain visible until new output finishes.";
       setTimeout(refresh, 1200);
     }
 
