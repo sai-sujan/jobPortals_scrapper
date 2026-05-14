@@ -117,6 +117,10 @@ TITLE_EXCLUSION_WEIGHTS = [
     ("mobile developer", -50),
     ("embedded", -40),
 ]
+JAVA_TITLE_PATTERNS = [
+    (re.compile(r"\bjava\b.*\bfull\s*stack\b|\bfull\s*stack\b.*\bjava\b|\bjava\b.*\bfullstack\b|\bfullstack\b.*\bjava\b", re.I), "Java full stack title"),
+    (re.compile(r"\bjava\b.*\b(?:developer|engineer|architect|backend|software)\b|\b(?:developer|engineer|architect|backend|software)\b.*\bjava\b", re.I), "Java developer/engineer title"),
+]
 DISALLOWED_WORK_PATTERNS = [
     (re.compile(r"\bno\s+c2c\b", re.I), "No C2C"),
     (re.compile(r"\bno\s+corp(?:oration)?\s*[- ]?\s*to\s*[- ]?\s*corp(?:oration)?\b", re.I), "No corp-to-corp"),
@@ -190,6 +194,10 @@ def disallowed_work_reasons(text: str) -> list[str]:
         if pattern.search(cleaned) and reason not in reasons:
             reasons.append(reason)
     return reasons
+
+
+def java_title_reasons(title: str) -> list[str]:
+    return [reason for pattern, reason in JAVA_TITLE_PATTERNS if pattern.search(title or "")]
 
 
 def contact_info_from_text(text: str) -> str:
@@ -500,6 +508,10 @@ def scrape_cbts(
             print(f"Detail failed for {row['job_id']}: {exc}")
             detail = {}
         job = normalize_job(row, detail, term)
+        title_reasons = java_title_reasons(job.title)
+        if title_reasons:
+            print(f"Excluded {job.job_number or job.job_id}: {', '.join(title_reasons)} — {job.title}")
+            continue
         if job.title_rank < MIN_TITLE_RANK:
             print(f"Excluded {job.job_number or job.job_id}: low title rank ({job.title_rank}) — {job.title}")
             continue

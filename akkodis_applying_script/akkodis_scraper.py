@@ -121,6 +121,10 @@ TITLE_EXCLUSION_WEIGHTS = [
     ("project manager", -35),
     ("business analyst", -30),
 ]
+JAVA_TITLE_PATTERNS = [
+    (re.compile(r"\bjava\b.*\bfull\s*stack\b|\bfull\s*stack\b.*\bjava\b|\bjava\b.*\bfullstack\b|\bfullstack\b.*\bjava\b", re.I), "Java full stack title"),
+    (re.compile(r"\bjava\b.*\b(?:developer|engineer|architect|backend|software)\b|\b(?:developer|engineer|architect|backend|software)\b.*\bjava\b", re.I), "Java developer/engineer title"),
+]
 DISALLOWED_WORK_PATTERNS = [
     (re.compile(r"\bno\s+c2c\b", re.I), "No C2C"),
     (re.compile(r"\bno\s+corp(?:oration)?\s*[- ]?\s*to\s*[- ]?\s*corp(?:oration)?\b", re.I), "No corp-to-corp"),
@@ -198,6 +202,10 @@ def disallowed_work_reasons(text: str) -> List[str]:
         if pattern.search(cleaned) and reason not in reasons:
             reasons.append(reason)
     return reasons
+
+
+def java_title_reasons(title: str) -> List[str]:
+    return [reason for pattern, reason in JAVA_TITLE_PATTERNS if pattern.search(title or "")]
 
 
 def is_disallowed_work_job(job: "AkkodisJob") -> bool:
@@ -449,6 +457,10 @@ def scrape_akkodis(
                 print(f"Detail failed for {row.get('jobId')}: {exc}")
             time.sleep(sleep_seconds)
         job = normalize_job(row, term, detail)
+        title_reasons = java_title_reasons(job.title)
+        if title_reasons:
+            print(f"Excluded {job.job_id}: {', '.join(title_reasons)} — {job.title}")
+            continue
         if exclude_disallowed_work and is_disallowed_work_job(job):
             print(f"Excluded {job.job_id}: {', '.join(disallowed_work_reasons(job.raw_text)) or 'disallowed work signal'}")
             continue

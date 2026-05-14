@@ -147,6 +147,8 @@ TITLE_EXCLUSION_WEIGHTS = [
     ("entry level", -100),
 ]
 TITLE_EXCLUSION_PATTERNS = [
+    (re.compile(r"\bjava\b.*\bfull\s*stack\b|\bfull\s*stack\b.*\bjava\b|\bjava\b.*\bfullstack\b|\bfullstack\b.*\bjava\b", re.I), "Java full stack title"),
+    (re.compile(r"\bjava\b.*\b(?:developer|engineer|architect|backend|software)\b|\b(?:developer|engineer|architect|backend|software)\b.*\bjava\b", re.I), "Java developer/engineer title"),
     (re.compile(r"\bjunior\b|\bjr\.?\s", re.I), "Junior title"),
     (re.compile(r"\bentry[\s-]level\b", re.I), "Entry-level title"),
 ]
@@ -222,6 +224,10 @@ def score_title(title: str) -> tuple[int, str]:
             score += weight
             reasons.append(f"{phrase}{weight}")
     return max(score, 0), "; ".join(reasons)
+
+
+def title_exclusion_reasons(title: str) -> list[str]:
+    return [reason for pattern, reason in TITLE_EXCLUSION_PATTERNS if pattern.search(title or "")]
 
 
 def disallowed_work_reasons(text: str) -> list[str]:
@@ -522,6 +528,10 @@ def scrape_kforce(
                 continue
             seen_ids.add(job_id)
             job = normalize_job(row, term)
+            title_reasons = title_exclusion_reasons(job.title)
+            if title_reasons:
+                print(f"Excluded {job.reference_code}: {', '.join(title_reasons)} — {job.title}")
+                continue
             if job.title_rank < MIN_TITLE_RANK:
                 print(f"Excluded {job.reference_code}: low title rank ({job.title_rank}) — {job.title}")
                 continue

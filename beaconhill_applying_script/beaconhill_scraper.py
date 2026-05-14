@@ -147,6 +147,8 @@ TITLE_EXCLUSION_WEIGHTS = [
 ]
 
 TITLE_EXCLUSION_PATTERNS = [
+    (re.compile(r"\bjava\b.*\bfull\s*stack\b|\bfull\s*stack\b.*\bjava\b|\bjava\b.*\bfullstack\b|\bfullstack\b.*\bjava\b", re.I), "Java full stack title"),
+    (re.compile(r"\bjava\b.*\b(?:developer|engineer|architect|backend|software)\b|\b(?:developer|engineer|architect|backend|software)\b.*\bjava\b", re.I), "Java developer/engineer title"),
     (re.compile(r"\bjunior\b|\bjr\.?\s", re.I), "Junior title"),
     (re.compile(r"\bentry[\s-]level\b", re.I), "Entry-level title"),
     (re.compile(r"\bintern(ship)?\b", re.I), "Intern title"),
