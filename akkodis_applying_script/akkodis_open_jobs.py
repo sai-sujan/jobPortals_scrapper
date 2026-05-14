@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Open filtered Akkodis job pages in Chrome tabs and keep the browser open."""
+"""Open filtered Akkodis job pages in the default browser."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+import time
+import webbrowser
 from pathlib import Path
 from typing import Any
-
-from playwright.sync_api import sync_playwright
 
 
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "output"
@@ -31,14 +31,15 @@ def load_jobs(path: Path) -> list[dict[str, Any]]:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Open Akkodis job pages in Chrome tabs.")
+    parser = argparse.ArgumentParser(description="Open Akkodis job pages in browser tabs.")
     parser.add_argument("--jobs-file", type=Path, help="Filtered akkodis_jobs_*.json file. Defaults to latest output.")
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--start-at", type=int, default=1, help="1-based job index to start from.")
-    parser.add_argument("--keep-open-minutes", type=int, default=120)
-    parser.add_argument("--slow-mo", type=int, default=100)
-    parser.add_argument("--browser-channel", default="chrome", help="Playwright browser channel to use. Defaults to Chrome.")
+    parser.add_argument("--delay", type=float, default=0.5, help="Seconds between opening each tab.")
+    parser.add_argument("--keep-open-minutes", type=int, default=120, help=argparse.SUPPRESS)
+    parser.add_argument("--slow-mo", type=int, default=100, help=argparse.SUPPRESS)
+    parser.add_argument("--browser-channel", default="chrome", help=argparse.SUPPRESS)
     return parser.parse_args()
 
 
@@ -55,31 +56,23 @@ def main() -> int:
         return 0
 
     print(f"Jobs file: {jobs_file}")
-    print(f"Opening Akkodis job tabs in Chrome: {len(selected)}")
+    print(f"Opening Akkodis job tabs in the default browser: {len(selected)}")
 
-    with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(channel=args.browser_channel, headless=False, slow_mo=args.slow_mo)
-        context = browser.new_context()
-        first_page = context.new_page()
+    opened = 0
+    for index, job in enumerate(selected, start=start + 1):
+        title = str(job.get("title") or "").strip()
+        job_url = str(job.get("job_url") or "").strip()
+        if not job_url:
+            print(f"[{index}] skipped, missing job_url: {title}", file=sys.stderr)
+            continue
+        print(f"[{index}/{len(jobs)}] {title}")
+        print(job_url)
+        webbrowser.open_new_tab(job_url)
+        opened += 1
+        if args.delay > 0:
+            time.sleep(args.delay)
 
-        try:
-            for index, job in enumerate(selected, start=start + 1):
-                page = first_page if index == start + 1 else context.new_page()
-                title = str(job.get("title") or "").strip()
-                job_url = str(job.get("job_url") or "").strip()
-                if not job_url:
-                    print(f"[{index}] skipped, missing job_url: {title}", file=sys.stderr)
-                    continue
-                print(f"[{index}/{len(jobs)}] {title}")
-                print(job_url)
-                page.goto(job_url, wait_until="domcontentloaded", timeout=60000)
-                page.wait_for_timeout(1000)
-
-            print(f"\nBrowser will stay open for {args.keep_open_minutes} minutes.")
-            first_page.wait_for_timeout(max(args.keep_open_minutes, 1) * 60 * 1000)
-        finally:
-            context.close()
-            browser.close()
+    print(f"\nOpened {opened} Akkodis tabs.")
     return 0
 
 
