@@ -4,12 +4,14 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
 import threading
 import time
 import urllib.parse
+import webbrowser
 from dataclasses import dataclass, asdict
 from datetime import date, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -19,6 +21,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent
 CONFIG_PATH = ROOT / "job_portal_dashboard_config.json"
+APPLIED_PATH = ROOT / "job_portal_dashboard_applied.json"
+APPLIED_TTL_SECONDS = 2 * 60 * 60
 PYTHON = sys.executable or "python3"
 
 
@@ -201,6 +205,83 @@ def load_latest_jobs(vendor: Vendor) -> list[dict[str, Any]]:
     return [row for row in data if isinstance(row, dict)]
 
 
+def job_url(job: dict[str, Any]) -> str:
+    return str(job.get("job_url") or job.get("apply_url") or job.get("url") or "").strip()
+
+
+def job_key(vendor_slug: str, job: dict[str, Any]) -> str:
+    identity = job_url(job) or "|".join(
+        str(job.get(field) or "").strip().lower()
+        for field in ("title", "location", "posted_date", "job_id")
+    )
+    return hashlib.sha256(f"{vendor_slug}|{identity}".encode("utf-8")).hexdigest()
+
+
+def load_applied_marks() -> dict[str, dict[str, Any]]:
+    now = time.time()
+    if not APPLIED_PATH.exists():
+        return {}
+    try:
+        data = json.loads(APPLIED_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    marks: dict[str, dict[str, Any]] = {}
+    changed = False
+    for key, value in data.items():
+        if not isinstance(value, dict):
+            changed = True
+            continue
+        marked_at = float(value.get("marked_at") or 0)
+        if marked_at and now - marked_at < APPLIED_TTL_SECONDS:
+            marks[str(key)] = value
+        else:
+            changed = True
+    if changed:
+        save_applied_marks(marks)
+    return marks
+
+
+def save_applied_marks(marks: dict[str, dict[str, Any]]) -> None:
+    APPLIED_PATH.write_text(json.dumps(marks, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def format_job_for_ui(vendor: Vendor, job: dict[str, Any], index: int, marks: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    key = job_key(vendor.slug, job)
+    mark = marks.get(key) or {}
+    marked_at = float(mark.get("marked_at") or 0)
+    expires_at = marked_at + APPLIED_TTL_SECONDS if marked_at else 0
+    return {
+        "key": key,
+        "index": index,
+        "vendor": vendor.label,
+        "slug": vendor.slug,
+        "title": str(job.get("title") or "Untitled job"),
+        "location": str(job.get("location") or ""),
+        "posted_date": str(job.get("posted_date") or job.get("posted_day") or ""),
+        "employment_type": str(job.get("employment_type") or ""),
+        "url": job_url(job),
+        "applied": bool(mark),
+        "marked_at": datetime.fromtimestamp(marked_at).isoformat(timespec="seconds") if marked_at else "",
+        "expires_at": datetime.fromtimestamp(expires_at).isoformat(timespec="seconds") if expires_at else "",
+        "seconds_left": max(int(expires_at - time.time()), 0) if expires_at else 0,
+    }
+
+
+def latest_jobs_for_ui(slug: str, config: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    vendor = VENDOR_BY_SLUG[slug]
+    jobs = load_latest_jobs(vendor)
+    start_at = max(int(payload.get("start_at") or config.get("start_at") or 1), 1)
+    limit = int(payload.get("limit") or config.get("open_limit") or 0)
+    selected = jobs[start_at - 1:] if start_at > 1 else jobs
+    if limit > 0:
+        selected = selected[:limit]
+    marks = load_applied_marks()
+    rows = [format_job_for_ui(vendor, job, start_at + offset, marks) for offset, job in enumerate(selected)]
+    return {"vendor": vendor.label, "jobs": rows, "total": len(jobs), "start_at": start_at, "limit": limit}
+
+
 def vendor_status(vendor: Vendor) -> dict[str, Any]:
     latest = latest_jobs_file(vendor)
     count = 0
@@ -352,6 +433,40 @@ def open_vendor(slug: str, config: dict[str, Any], payload: dict[str, Any]) -> d
     return {"status": "started", "pid": proc.pid, "vendor": vendor.label}
 
 
+def open_job(slug: str, key: str) -> dict[str, Any]:
+    vendor = VENDOR_BY_SLUG[slug]
+    jobs = load_latest_jobs(vendor)
+    for job in jobs:
+        if job_key(slug, job) == key:
+            url = job_url(job)
+            if not url:
+                raise ValueError("Selected job has no URL.")
+            webbrowser.open_new_tab(url)
+            return {"status": "started", "vendor": vendor.label, "title": str(job.get("title") or ""), "job_url": url}
+    raise ValueError("Selected job was not found in the latest output.")
+
+
+def set_applied_mark(slug: str, key: str, applied: bool) -> dict[str, Any]:
+    vendor = VENDOR_BY_SLUG[slug]
+    jobs = load_latest_jobs(vendor)
+    selected = next((job for job in jobs if job_key(slug, job) == key), None)
+    if not selected:
+        raise ValueError("Selected job was not found in the latest output.")
+    marks = load_applied_marks()
+    if applied:
+        marks[key] = {
+            "vendor": vendor.label,
+            "slug": slug,
+            "title": str(selected.get("title") or ""),
+            "url": job_url(selected),
+            "marked_at": time.time(),
+        }
+    else:
+        marks.pop(key, None)
+    save_applied_marks(marks)
+    return {"status": "marked" if applied else "cleared", "key": key, "applied": applied}
+
+
 def start_judge_apply(config: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     vendor = VENDOR_BY_SLUG["judgegroup"]
     jobs = load_latest_jobs(vendor)
@@ -396,12 +511,16 @@ def start_judge_apply(config: dict[str, Any], payload: dict[str, Any]) -> dict[s
     if payload.get("submit"):
         cmd.append("--submit")
     proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    key = job_key(vendor.slug, selected)
+    if payload.get("submit"):
+        set_applied_mark(vendor.slug, key, True)
     return {
         "status": "started",
         "pid": proc.pid,
         "vendor": vendor.label,
         "title": str(selected.get("title") or ""),
         "job_url": job_url,
+        "job_key": key,
         "submit": bool(payload.get("submit")),
     }
 
@@ -415,6 +534,22 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"config": load_config(), "vendors": [vendor_status(v) for v in VENDORS], "rotation": rotation_preview()})
         elif parsed.path == "/api/status":
             self.send_json({"runs": list(RUNS.values())[-10:], "vendors": [vendor_status(v) for v in VENDORS], "rotation": rotation_preview()})
+        elif parsed.path == "/api/jobs":
+            query = urllib.parse.parse_qs(parsed.query)
+            slug = str((query.get("vendor") or [""])[0])
+            if slug not in VENDOR_BY_SLUG:
+                self.send_json({"ok": False, "error": "Unknown vendor."}, status=400)
+                return
+            try:
+                config = load_config()
+                result = latest_jobs_for_ui(slug, config, {
+                    "start_at": (query.get("start_at") or [""])[0],
+                    "limit": (query.get("limit") or [""])[0],
+                })
+            except Exception as exc:  # noqa: BLE001
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
+            self.send_json({"ok": True, **result})
         else:
             self.send_error(404)
 
@@ -452,6 +587,32 @@ class Handler(BaseHTTPRequestHandler):
                 return
             try:
                 result = open_vendor(slug, config, payload)
+            except Exception as exc:  # noqa: BLE001
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
+            self.send_json({"ok": True, **result})
+            return
+        if self.path == "/api/open-job":
+            slug = str(payload.get("vendor") or "")
+            key = str(payload.get("key") or "")
+            if slug not in VENDOR_BY_SLUG or not key:
+                self.send_json({"ok": False, "error": "Unknown job."}, status=400)
+                return
+            try:
+                result = open_job(slug, key)
+            except Exception as exc:  # noqa: BLE001
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
+            self.send_json({"ok": True, **result})
+            return
+        if self.path == "/api/applied":
+            slug = str(payload.get("vendor") or "")
+            key = str(payload.get("key") or "")
+            if slug not in VENDOR_BY_SLUG or not key:
+                self.send_json({"ok": False, "error": "Unknown job."}, status=400)
+                return
+            try:
+                result = set_applied_mark(slug, key, bool(payload.get("applied")))
             except Exception as exc:  # noqa: BLE001
                 self.send_json({"ok": False, "error": str(exc)}, status=500)
                 return
@@ -673,11 +834,45 @@ HTML = r"""<!doctype html>
     .judge-panel summary { cursor: pointer; font-weight: 800; font-size: 13px; color: #34404b; }
     .compact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
     .compact-grid .wide { grid-column: 1 / -1; }
+    .jobs-panel {
+      margin-top: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .jobs-panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #f3f6f8;
+    }
+    .jobs-panel-title { font-weight: 850; }
+    .jobs-panel-sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .job-list { display: grid; }
+    .job-row {
+      display: grid;
+      grid-template-columns: 52px minmax(240px, 1fr) 132px 220px;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .job-row:last-child { border-bottom: 0; }
+    .job-title { font-weight: 800; line-height: 1.25; }
+    .job-meta { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .applied-pill { background: #d7f0df; color: #0b5b3b; }
+    .not-applied-pill { background: #eef1f4; color: #53606b; }
+    .empty-state { padding: 14px 12px; color: var(--muted); font-size: 13px; }
     @media (max-width: 980px) {
       header { align-items: start; flex-direction: column; }
       main { grid-template-columns: 1fr; }
       aside { border-right: 0; border-bottom: 1px solid var(--line); }
       .rotation { grid-template-columns: 1fr 1fr; }
+      .job-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -821,6 +1016,18 @@ HTML = r"""<!doctype html>
         </thead>
         <tbody id="vendors"></tbody>
       </table>
+      <div class="jobs-panel">
+        <div class="jobs-panel-head">
+          <div>
+            <div class="jobs-panel-title" id="jobsTitle">Selected Portal Jobs</div>
+            <div class="jobs-panel-sub" id="jobsSub">Applied marks expire after 2 hours.</div>
+          </div>
+          <button id="refreshJobs">Refresh Jobs</button>
+        </div>
+        <div class="job-list" id="jobList">
+          <div class="empty-state">Choose a portal to see the latest filtered jobs.</div>
+        </div>
+      </div>
       <div class="log" id="log">Ready.</div>
     </section>
   </main>
@@ -835,6 +1042,8 @@ HTML = r"""<!doctype html>
       selectedVendor: "",
       checkedVendors: new Set(),
       vendorChecksTouched: false,
+      portalJobs: [],
+      jobsMeta: {},
     };
     const $ = (id) => document.getElementById(id);
 
@@ -904,6 +1113,25 @@ HTML = r"""<!doctype html>
       return path ? path.split("/").pop() : "";
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      }[char]));
+    }
+
+    function formatSeconds(seconds) {
+      const safe = Math.max(Number(seconds || 0), 0);
+      const minutes = Math.floor(safe / 60);
+      const hours = Math.floor(minutes / 60);
+      const remainder = minutes % 60;
+      if (hours > 0) return `${hours}h ${remainder}m left`;
+      return `${Math.max(minutes, 1)}m left`;
+    }
+
     function renderRotation() {
       const today = new Date().toISOString().slice(0, 10);
       $("rotation").innerHTML = state.rotation.slice(0, 5).map((row) => `
@@ -962,6 +1190,49 @@ HTML = r"""<!doctype html>
       $("judgePanel").classList.toggle("visible", state.selectedVendor === "judgegroup");
     }
 
+    function renderJobsPanel() {
+      const vendor = state.vendors.find((item) => item.slug === state.selectedVendor);
+      $("jobsTitle").textContent = vendor ? `${vendor.label} Jobs` : "Selected Portal Jobs";
+      const total = state.jobsMeta.total ?? 0;
+      $("jobsSub").textContent = vendor
+        ? `Showing from #${state.jobsMeta.start_at || $("startAt").value || 1}${state.jobsMeta.limit ? `, limit ${state.jobsMeta.limit}` : ""}. Applied marks expire after 2 hours. Total latest jobs: ${total}.`
+        : "Applied marks expire after 2 hours.";
+      if (!state.portalJobs.length) {
+        $("jobList").innerHTML = '<div class="empty-state">No latest jobs found for this portal yet. Scrape it first, then refresh.</div>';
+        return;
+      }
+      $("jobList").innerHTML = state.portalJobs.map((job) => {
+        const meta = [job.employment_type, job.location, job.posted_date].filter(Boolean).join(" | ");
+        const applied = job.applied
+          ? `<span class="pill applied-pill">Applied · ${escapeHtml(formatSeconds(job.seconds_left))}</span>`
+          : '<span class="pill not-applied-pill">Not applied</span>';
+        return `
+          <div class="job-row">
+            <div class="zero">#${job.index}</div>
+            <div>
+              <div class="job-title">${escapeHtml(job.title)}</div>
+              <div class="job-meta">${escapeHtml(meta || job.url || "")}</div>
+            </div>
+            <div>${applied}</div>
+            <div class="button-row">
+              <button class="small" data-open-job="${escapeHtml(job.key)}">Open</button>
+              <button class="small secondary" data-mark-applied="${escapeHtml(job.key)}">Mark Applied</button>
+              <button class="small" data-clear-applied="${escapeHtml(job.key)}">Clear</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+      document.querySelectorAll("[data-open-job]").forEach((button) => {
+        button.addEventListener("click", () => openSingleJob(button.dataset.openJob));
+      });
+      document.querySelectorAll("[data-mark-applied]").forEach((button) => {
+        button.addEventListener("click", () => markApplied(button.dataset.markApplied, true));
+      });
+      document.querySelectorAll("[data-clear-applied]").forEach((button) => {
+        button.addEventListener("click", () => markApplied(button.dataset.clearApplied, false));
+      });
+    }
+
     function renderRuns() {
       const latest = state.runs[state.runs.length - 1];
       $("runState").textContent = latest ? latest.status : "idle";
@@ -995,7 +1266,26 @@ HTML = r"""<!doctype html>
       state.rotation = data.rotation || [];
       renderRotation();
       renderVendors();
+      await loadSelectedJobs();
       renderRuns();
+    }
+
+    async function loadSelectedJobs() {
+      if (!state.selectedVendor) return;
+      const params = new URLSearchParams({
+        vendor: state.selectedVendor,
+        start_at: String(Number($("startAt").value || 1)),
+        limit: String(Number($("openLimit").value || 0)),
+      });
+      try {
+        const data = await api(`/api/jobs?${params.toString()}`);
+        state.portalJobs = data.jobs || [];
+        state.jobsMeta = { total: data.total, start_at: data.start_at, limit: data.limit };
+      } catch (error) {
+        state.portalJobs = [];
+        state.jobsMeta = {};
+      }
+      renderJobsPanel();
     }
 
     async function scrape(mode, vendors = []) {
@@ -1020,6 +1310,17 @@ HTML = r"""<!doctype html>
       $("log").textContent = `Opening ${slug} jobs in the browser.`;
     }
 
+    async function openSingleJob(key) {
+      const data = await api("/api/open-job", { method: "POST", body: JSON.stringify({ vendor: state.selectedVendor, key }) });
+      $("log").textContent = `Opening ${data.title || data.job_url} in the browser.`;
+    }
+
+    async function markApplied(key, applied) {
+      await api("/api/applied", { method: "POST", body: JSON.stringify({ vendor: state.selectedVendor, key, applied }) });
+      await loadSelectedJobs();
+      $("log").textContent = applied ? "Marked applied. This mark will clear automatically after 2 hours." : "Applied mark cleared.";
+    }
+
     async function judgeApply(submit) {
       if (submit && !confirm("Submit the selected Judge Group application now?")) return;
       await saveConfig();
@@ -1030,6 +1331,7 @@ HTML = r"""<!doctype html>
       };
       const data = await api("/api/judge-apply", { method: "POST", body: JSON.stringify(payload) });
       $("log").textContent = `${submit ? "Submitting" : "Filling"} Judge Group application: ${data.title || data.job_url}`;
+      if (submit) await loadSelectedJobs();
     }
 
     $("save").addEventListener("click", saveConfig);
@@ -1049,8 +1351,13 @@ HTML = r"""<!doctype html>
     });
     $("openVendor").addEventListener("change", (event) => { state.selectedVendor = event.target.value; });
     $("openVendor").addEventListener("change", renderJudgePanel);
+    $("openVendor").addEventListener("change", () => loadSelectedJobs());
+    $("refreshJobs").addEventListener("click", () => loadSelectedJobs());
     ["days", "openLimit", "startAt", "keepOpen", "keywords", "judgeResume", "judgeFirst", "judgeLast", "judgeEmail", "judgePhone", "judgeCountry", "judgeStreet", "judgeCity", "judgeState", "judgeZip", "judgeKeepOpen"].forEach((id) => {
       $(id).addEventListener("input", () => { state.configDirty = true; });
+    });
+    ["openLimit", "startAt"].forEach((id) => {
+      $(id).addEventListener("change", () => loadSelectedJobs());
     });
     $("judgeFill").addEventListener("click", () => judgeApply(false));
     $("judgeSubmit").addEventListener("click", () => judgeApply(true));

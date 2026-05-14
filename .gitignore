@@ -19,6 +19,7 @@ reports/
 **/output/
 **/.dashboard_terms.txt
 job_portal_dashboard_config.json
+job_portal_dashboard_applied.json
 
 # Personal documents and downloaded sheets
 *.docx
