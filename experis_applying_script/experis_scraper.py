@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -18,15 +19,45 @@ API_URL = f"{BASE_URL}/api/services/Jobs/searchjobs"
 DEFAULT_SEARCH_TERMS = ["python", "full stack", "backend", "data engineer", "data engineering", "etl", "ai engineer", "machine learning", "llm", "rag"]
 
 
-def fetch_term(term: str, timeout: int, limit: int, max_pages: int) -> list[dict[str, Any]]:
+RETRYABLE_EXCEPTIONS = (
+    requests.exceptions.ChunkedEncodingError,
+    requests.exceptions.ConnectionError,
+    requests.exceptions.ReadTimeout,
+    requests.exceptions.Timeout,
+)
+
+
+def post_with_retries(session: requests.Session, payload: dict[str, Any], timeout: int, retries: int, retry_sleep: float) -> dict[str, Any] | None:
+    for attempt in range(1, retries + 2):
+        try:
+            response = session.post(API_URL, json=payload, timeout=timeout)
+            response.raise_for_status()
+            return response.json()
+        except RETRYABLE_EXCEPTIONS as exc:
+            if attempt > retries:
+                print(f"Experis request failed after {attempt} attempts: {exc}", file=sys.stderr)
+                return None
+            print(f"Experis request retry {attempt}/{retries}: {exc}", file=sys.stderr)
+            time.sleep(retry_sleep * attempt)
+        except requests.RequestException as exc:
+            print(f"Experis request skipped: {exc}", file=sys.stderr)
+            return None
+        except ValueError as exc:
+            print(f"Experis response was not valid JSON: {exc}", file=sys.stderr)
+            return None
+    return None
+
+
+def fetch_term(term: str, timeout: int, limit: int, max_pages: int, retries: int, retry_sleep: float) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0", "Accept": "application/json", "Content-Type": "application/json", "Origin": BASE_URL, "Referer": f"{BASE_URL}/en/search?searchKeyword={term}"})
     for page in range(max_pages):
         payload = {"filter": {"offset": page * limit, "totalCount": 0, "limit": limit, "searchkeyword": term, "haslocation": False, "language": "en"}}
-        response = session.post(API_URL, json=payload, timeout=timeout)
-        response.raise_for_status()
-        data = response.json()
+        data = post_with_retries(session, payload, timeout, retries, retry_sleep)
+        if data is None:
+            print(f"Experis {term}: stopped at page {page + 1}; keeping {len(rows)} jobs already extracted")
+            break
         batch = data.get("jobsItems") or data.get("data", {}).get("jobsItems") or []
         rows.extend(batch)
         total = int(data.get("totalCount") or data.get("filters", {}).get("totalCount") or len(rows))
@@ -46,11 +77,11 @@ def normalize(row: dict[str, Any], search_term: str) -> VendorJob:
     return VendorJob("Experis", search_term, rank, reasons, title, clean_text(row.get("domain")), clean_text(row.get("jobLocation")), clean_text(row.get("employmentType") or row.get("jobType")), "", str(row.get("publishfromDate") or ""), str(row.get("jobID") or row.get("jobItemID") or ""), job_url, job_url, extract_contact_info(raw_text), raw_text[:900], raw_text)
 
 
-def scrape(terms: Iterable[str], posted_within_days: int, exclude_disallowed_work: bool, timeout: int, limit: int, max_pages: int) -> list[VendorJob]:
+def scrape(terms: Iterable[str], posted_within_days: int, exclude_disallowed_work: bool, timeout: int, limit: int, max_pages: int, retries: int, retry_sleep: float) -> list[VendorJob]:
     seen: set[str] = set()
     jobs: list[VendorJob] = []
     for term in terms:
-        for row in fetch_term(term, timeout, limit, max_pages):
+        for row in fetch_term(term, timeout, limit, max_pages, retries, retry_sleep):
             job = normalize(row, term)
             key = job.job_id or job.job_url
             if key in seen:
@@ -69,6 +100,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout", type=int, default=25)
     parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--max-pages", type=int, default=3)
+    parser.add_argument("--retries", type=int, default=3)
+    parser.add_argument("--retry-sleep", type=float, default=1.0)
     parser.add_argument("--out-dir", type=Path, default=Path(__file__).resolve().parent / "output")
     parser.add_argument("--no-excel", action="store_true")
     return parser.parse_args()
@@ -76,7 +109,16 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    jobs = scrape(args.terms or DEFAULT_SEARCH_TERMS, args.posted_within_days, not args.keep_w2_f2f_onsite_interview, args.timeout, args.limit, args.max_pages)
+    jobs = scrape(
+        args.terms or DEFAULT_SEARCH_TERMS,
+        args.posted_within_days,
+        not args.keep_w2_f2f_onsite_interview,
+        args.timeout,
+        args.limit,
+        args.max_pages,
+        args.retries,
+        args.retry_sleep,
+    )
     write_outputs("experis", jobs, args.out_dir, args.posted_within_days, args.no_excel)
     return 0
 

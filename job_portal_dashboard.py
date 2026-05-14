@@ -264,26 +264,62 @@ def start_run(kind: str, vendor_slugs: list[str], config: dict[str, Any]) -> str
 def run_scrapers(run_id: str, vendor_slugs: list[str], config: dict[str, Any]) -> None:
     for slug in vendor_slugs:
         vendor = VENDOR_BY_SLUG[slug]
-        step = {"vendor": vendor.label, "slug": slug, "status": "running", "count": 0, "output": ""}
+        step_started = datetime.now()
+        step = {
+            "vendor": vendor.label,
+            "slug": slug,
+            "status": "running",
+            "count": 0,
+            "output": "",
+            "started_at": step_started.isoformat(timespec="seconds"),
+            "finished_at": "",
+            "duration_seconds": None,
+            "summary": "",
+        }
         RUNS[run_id]["steps"].append(step)
         before = latest_jobs_file(vendor)
         cmd = command_for_scrape(vendor, config)
         try:
             proc = subprocess.run(cmd, cwd=ROOT, text=True, capture_output=True, timeout=900)
+            step_finished = datetime.now()
             after = latest_jobs_file(vendor)
             status = vendor_status(vendor)
+            output = (proc.stdout + "\n" + proc.stderr).strip()
             step.update({
                 "status": "done" if proc.returncode == 0 else "failed",
                 "returncode": proc.returncode,
-                "count": status["latest_count"],
+                "count": status["latest_count"] if proc.returncode == 0 else 0,
                 "latest_file": status["latest_file"],
                 "changed": str(before) != str(after),
-                "output": (proc.stdout + "\n" + proc.stderr)[-5000:],
+                "output": output[-5000:],
+                "summary": summarize_scraper_output(output),
+                "finished_at": step_finished.isoformat(timespec="seconds"),
+                "duration_seconds": round((step_finished - step_started).total_seconds(), 1),
             })
         except Exception as exc:  # noqa: BLE001 - surface failures in the UI.
-            step.update({"status": "failed", "output": str(exc), "returncode": -1})
+            step_finished = datetime.now()
+            step.update({
+                "status": "failed",
+                "output": str(exc),
+                "summary": str(exc),
+                "returncode": -1,
+                "finished_at": step_finished.isoformat(timespec="seconds"),
+                "duration_seconds": round((step_finished - step_started).total_seconds(), 1),
+            })
     RUNS[run_id]["status"] = "done" if all(step["status"] == "done" for step in RUNS[run_id]["steps"]) else "failed"
     RUNS[run_id]["finished_at"] = datetime.now().isoformat(timespec="seconds")
+
+
+def summarize_scraper_output(output: str) -> str:
+    if not output:
+        return ""
+    interesting_prefixes = ("Extracted ", "Saved ", "CSV:", "JSON:", "Excel:")
+    lines = []
+    for line in output.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(interesting_prefixes):
+            lines.append(stripped)
+    return " | ".join(lines[-5:])
 
 
 def open_vendor(slug: str, config: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
@@ -704,7 +740,11 @@ HTML = r"""<!doctype html>
       const lines = [`Run ${latest.id} - ${latest.kind} - ${latest.status}`, freshNote];
       for (const step of latest.steps || []) {
         const countText = step.status === "running" ? "scraping from beginning..." : `${step.count ?? 0} jobs`;
-        lines.push(`${step.status.padEnd(7)} ${step.vendor}: ${countText}`);
+        const duration = step.duration_seconds == null ? "" : ` in ${step.duration_seconds}s`;
+        const freshness = step.changed ? "new output" : "no new file";
+        lines.push(`${step.status.padEnd(7)} ${step.vendor}: ${countText}${duration} (${freshness})`);
+        if (step.latest_file) lines.push(`        file: ${step.latest_file}`);
+        if (step.summary) lines.push(`        ${step.summary}`);
         if (step.status === "failed" && step.output) lines.push(step.output);
       }
       $("log").textContent = lines.join("\n");
