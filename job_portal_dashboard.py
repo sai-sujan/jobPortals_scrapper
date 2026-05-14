@@ -665,7 +665,17 @@ HTML = r"""<!doctype html>
     </section>
   </main>
   <script>
-    const state = { vendors: [], rotation: [], config: {}, runs: [], configLoaded: false, configDirty: false };
+    const state = {
+      vendors: [],
+      rotation: [],
+      config: {},
+      runs: [],
+      configLoaded: false,
+      configDirty: false,
+      selectedVendor: "",
+      checkedVendors: new Set(),
+      vendorChecksTouched: false,
+    };
     const $ = (id) => document.getElementById(id);
 
     async function api(path, options = {}) {
@@ -716,10 +726,18 @@ HTML = r"""<!doctype html>
     }
 
     function renderVendors() {
+      const previousVendor = state.selectedVendor || $("openVendor").value;
+      const previousChecks = new Set([...document.querySelectorAll(".pick:checked")].map((item) => item.value));
+      if (state.vendorChecksTouched) state.checkedVendors = previousChecks;
+
       $("openVendor").innerHTML = state.vendors.map((v) => `<option value="${v.slug}">${v.label}</option>`).join("");
+      const validVendor = state.vendors.some((v) => v.slug === previousVendor);
+      $("openVendor").value = validVendor ? previousVendor : (state.vendors[0]?.slug || "");
+      state.selectedVendor = $("openVendor").value;
+
       $("vendors").innerHTML = state.vendors.map((v) => `
         <tr class="${v.active_today ? "active" : ""}">
-          <td><input class="pick" type="checkbox" value="${v.slug}" ${v.active_today ? "checked" : ""}></td>
+          <td><input class="pick" type="checkbox" value="${v.slug}" ${(state.vendorChecksTouched ? state.checkedVendors.has(v.slug) : v.active_today) ? "checked" : ""}></td>
           <td><strong>${v.label}</strong></td>
           <td>${v.active_today ? '<span class="pill active-pill">active</span>' : ""}</td>
           <td class="${v.latest_count ? "" : "zero"}">${v.latest_count}</td>
@@ -730,6 +748,13 @@ HTML = r"""<!doctype html>
       document.querySelectorAll("[data-open]").forEach((button) => {
         button.addEventListener("click", () => openPortal(button.dataset.open));
       });
+      document.querySelectorAll(".pick").forEach((box) => {
+        box.addEventListener("change", () => {
+          state.vendorChecksTouched = true;
+          state.checkedVendors = new Set([...document.querySelectorAll(".pick:checked")].map((item) => item.value));
+        });
+      });
+      updateToggleAll();
     }
 
     function renderRuns() {
@@ -778,7 +803,9 @@ HTML = r"""<!doctype html>
     }
 
     function selectedVendors() {
-      return [...document.querySelectorAll(".pick:checked")].map((item) => item.value);
+      state.vendorChecksTouched = true;
+      state.checkedVendors = new Set([...document.querySelectorAll(".pick:checked")].map((item) => item.value));
+      return [...state.checkedVendors];
     }
 
     async function openPortal(slug) {
@@ -798,13 +825,25 @@ HTML = r"""<!doctype html>
       for (const vendor of state.vendors.filter((v) => v.active_today)) await openPortal(vendor.slug);
     });
     $("toggleAll").addEventListener("change", (event) => {
+      state.vendorChecksTouched = true;
       document.querySelectorAll(".pick").forEach((box) => { box.checked = event.target.checked; });
+      state.checkedVendors = new Set([...document.querySelectorAll(".pick:checked")].map((item) => item.value));
+      updateToggleAll();
     });
+    $("openVendor").addEventListener("change", (event) => { state.selectedVendor = event.target.value; });
     ["days", "openLimit", "startAt", "keepOpen", "keywords"].forEach((id) => {
       $(id).addEventListener("input", () => { state.configDirty = true; });
     });
     setInterval(refreshStatus, 5000);
     refresh().catch((error) => { $("log").textContent = error.message; });
+
+    function updateToggleAll() {
+      const boxes = [...document.querySelectorAll(".pick")];
+      if (!boxes.length) return;
+      const checked = boxes.filter((box) => box.checked).length;
+      $("toggleAll").checked = checked === boxes.length;
+      $("toggleAll").indeterminate = checked > 0 && checked < boxes.length;
+    }
   </script>
 </body>
 </html>
