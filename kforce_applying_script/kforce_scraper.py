@@ -706,16 +706,20 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    jobs = scrape_kforce(
-        load_terms(args),
-        args.posted_within_days,
-        not args.all_job_types,
-        not args.keep_w2_f2f_onsite_interview,
-        args.min_hourly_rate,
-        args.ai_filter,
-        args.timeout,
-        args.sleep,
-    )
+    if not AZURE_SEARCH_KEY:
+        print("Kforce scrape skipped: set KFORCE_AZURE_SEARCH_KEY to enable this portal.")
+        jobs = []
+    else:
+        jobs = scrape_kforce(
+            load_terms(args),
+            args.posted_within_days,
+            not args.all_job_types,
+            not args.keep_w2_f2f_onsite_interview,
+            args.min_hourly_rate,
+            args.ai_filter,
+            args.timeout,
+            args.sleep,
+        )
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     csv_path = args.out_dir / f"kforce_jobs_{timestamp}.csv"
     json_path = args.out_dir / f"kforce_jobs_{timestamp}.json"
