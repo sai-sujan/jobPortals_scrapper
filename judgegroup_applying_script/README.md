@@ -30,4 +30,26 @@ Open latest filtered jobs:
 python3 judgegroup_open_jobs.py --limit 10
 ```
 
+Fill one application in Chrome and leave it open without submitting:
+
+```bash
+python3 judgegroup_apply.py \
+  --url "https://www.judge.com/jobs/details/1132024/" \
+  --resume /path/to/resume.docx \
+  --first-name Jane \
+  --last-name Candidate \
+  --email jane@example.com \
+  --phone 5551234567 \
+  --street-address "City center" \
+  --city "Jersey City" \
+  --state NJ \
+  --zip-code 08540
+```
+
+Fill and submit:
+
+```bash
+python3 judgegroup_apply.py --url "https://www.judge.com/jobs/details/1132024/" --resume /path/to/resume.docx --first-name Jane --last-name Candidate --email jane@example.com --phone 5551234567 --street-address "City center" --city "Jersey City" --state NJ --zip-code 08540 --submit --keep-open-seconds 20
+```
+
 Outputs are written to `output/`.

@@ -97,6 +97,19 @@ def default_config() -> dict[str, Any]:
         "keep_open_minutes": 60,
         "keywords": DEFAULT_KEYWORDS,
         "vendor_overrides": {},
+        "judge_apply": {
+            "resume_path": "resume.docx",
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+            "phone": "",
+            "country": "United States",
+            "street_address": "",
+            "city": "",
+            "state": "",
+            "zip_code": "",
+            "keep_open_seconds": 45,
+        },
     }
 
 
@@ -176,6 +189,16 @@ def latest_jobs_file(vendor: Vendor) -> Path | None:
     out_dir = ROOT / vendor.folder / "output"
     files = sorted(out_dir.glob(f"{vendor.prefix}_jobs_*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
     return files[0] if files else None
+
+
+def load_latest_jobs(vendor: Vendor) -> list[dict[str, Any]]:
+    latest = latest_jobs_file(vendor)
+    if not latest:
+        raise FileNotFoundError(f"No latest jobs file found for {vendor.label}")
+    data = json.loads(latest.read_text(encoding="utf-8"))
+    if not isinstance(data, list):
+        raise ValueError(f"Expected a list of jobs in {latest}")
+    return [row for row in data if isinstance(row, dict)]
 
 
 def vendor_status(vendor: Vendor) -> dict[str, Any]:
@@ -329,6 +352,60 @@ def open_vendor(slug: str, config: dict[str, Any], payload: dict[str, Any]) -> d
     return {"status": "started", "pid": proc.pid, "vendor": vendor.label}
 
 
+def start_judge_apply(config: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    vendor = VENDOR_BY_SLUG["judgegroup"]
+    jobs = load_latest_jobs(vendor)
+    start_at = max(int(payload.get("start_at") or config.get("start_at") or 1), 1)
+    selected = jobs[start_at - 1] if start_at - 1 < len(jobs) else None
+    if not selected:
+        raise ValueError(f"No Judge Group job found at position {start_at}")
+    job_url = str(selected.get("job_url") or selected.get("apply_url") or "").strip()
+    if not job_url:
+        raise ValueError(f"Judge Group job at position {start_at} has no URL")
+
+    apply_config = config.get("judge_apply") if isinstance(config.get("judge_apply"), dict) else {}
+    script = ROOT / vendor.folder / "judgegroup_apply.py"
+    cmd = [
+        PYTHON,
+        str(script),
+        "--url",
+        job_url,
+        "--resume",
+        str(apply_config.get("resume_path") or "resume.docx"),
+        "--first-name",
+        str(apply_config.get("first_name") or ""),
+        "--last-name",
+        str(apply_config.get("last_name") or ""),
+        "--email",
+        str(apply_config.get("email") or ""),
+        "--phone",
+        str(apply_config.get("phone") or ""),
+        "--country",
+        str(apply_config.get("country") or "United States"),
+        "--street-address",
+        str(apply_config.get("street_address") or ""),
+        "--city",
+        str(apply_config.get("city") or ""),
+        "--state",
+        str(apply_config.get("state") or ""),
+        "--zip-code",
+        str(apply_config.get("zip_code") or ""),
+        "--keep-open-seconds",
+        str(int(payload.get("keep_open_seconds") or apply_config.get("keep_open_seconds") or 45)),
+    ]
+    if payload.get("submit"):
+        cmd.append("--submit")
+    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return {
+        "status": "started",
+        "pid": proc.pid,
+        "vendor": vendor.label,
+        "title": str(selected.get("title") or ""),
+        "job_url": job_url,
+        "submit": bool(payload.get("submit")),
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         parsed = urllib.parse.urlparse(self.path)
@@ -375,6 +452,14 @@ class Handler(BaseHTTPRequestHandler):
                 return
             try:
                 result = open_vendor(slug, config, payload)
+            except Exception as exc:  # noqa: BLE001
+                self.send_json({"ok": False, "error": str(exc)}, status=500)
+                return
+            self.send_json({"ok": True, **result})
+            return
+        if self.path == "/api/judge-apply":
+            try:
+                result = start_judge_apply(config, payload)
             except Exception as exc:  # noqa: BLE001
                 self.send_json({"ok": False, "error": str(exc)}, status=500)
                 return
@@ -484,6 +569,7 @@ HTML = r"""<!doctype html>
     textarea { min-height: 190px; resize: vertical; line-height: 1.35; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .button-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
     button {
       border: 1px solid #b9c2cb;
       background: white;
@@ -498,6 +584,8 @@ HTML = r"""<!doctype html>
     button.primary { background: var(--brand); color: white; border-color: var(--brand); }
     button.secondary { background: #26323f; color: white; border-color: #26323f; }
     button.warn { background: var(--brand-2); color: white; border-color: var(--brand-2); }
+    button.danger { background: var(--danger); color: white; border-color: var(--danger); }
+    button.small { min-height: 30px; padding: 0 9px; font-size: 12px; }
     button:disabled { opacity: .55; cursor: not-allowed; }
     table {
       width: 100%;
@@ -507,8 +595,11 @@ HTML = r"""<!doctype html>
       border-radius: 8px;
       overflow: hidden;
     }
-    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 13px; vertical-align: middle; }
+    th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); font-size: 13px; vertical-align: middle; }
     th { background: #eef1f4; font-size: 12px; color: #3d4852; }
+    td.output-cell { max-width: 310px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .job-count { font-weight: 800; font-size: 14px; }
+    .portal-name { font-weight: 800; }
     tr.active td { background: var(--good-bg); }
     tr:last-child td { border-bottom: 0; }
     .toolbar {
@@ -569,6 +660,19 @@ HTML = r"""<!doctype html>
       color: #513b10;
       margin-bottom: 14px;
     }
+    .judge-panel {
+      display: none;
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      background: #f7fbfa;
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .judge-panel.visible { display: block; }
+    .judge-panel details { margin-top: 8px; }
+    .judge-panel summary { cursor: pointer; font-weight: 800; font-size: 13px; color: #34404b; }
+    .compact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .compact-grid .wide { grid-column: 1 / -1; }
     @media (max-width: 980px) {
       header { align-items: start; flex-direction: column; }
       main { grid-template-columns: 1fr; }
@@ -633,6 +737,62 @@ HTML = r"""<!doctype html>
           <button class="warn" id="openSelected">Open Selected</button>
           <button id="openToday">Open Today's 2</button>
         </div>
+        <div class="judge-panel" id="judgePanel">
+          <h3>Judge Group Apply</h3>
+          <div class="buttons">
+            <button class="secondary" id="judgeFill">Fill Judge</button>
+            <button class="danger" id="judgeSubmit">Submit Judge</button>
+          </div>
+          <details>
+            <summary>Applicant Settings</summary>
+            <div class="compact-grid">
+              <div class="wide">
+                <label for="judgeResume">Resume path</label>
+                <input id="judgeResume" spellcheck="false">
+              </div>
+              <div>
+                <label for="judgeFirst">First name</label>
+                <input id="judgeFirst">
+              </div>
+              <div>
+                <label for="judgeLast">Last name</label>
+                <input id="judgeLast">
+              </div>
+              <div class="wide">
+                <label for="judgeEmail">Email</label>
+                <input id="judgeEmail">
+              </div>
+              <div>
+                <label for="judgePhone">Phone</label>
+                <input id="judgePhone">
+              </div>
+              <div>
+                <label for="judgeCountry">Country</label>
+                <input id="judgeCountry">
+              </div>
+              <div class="wide">
+                <label for="judgeStreet">Street address</label>
+                <input id="judgeStreet">
+              </div>
+              <div>
+                <label for="judgeCity">City</label>
+                <input id="judgeCity">
+              </div>
+              <div>
+                <label for="judgeState">State</label>
+                <input id="judgeState">
+              </div>
+              <div>
+                <label for="judgeZip">ZIP</label>
+                <input id="judgeZip">
+              </div>
+              <div>
+                <label for="judgeKeepOpen">Keep open seconds</label>
+                <input id="judgeKeepOpen" type="number" min="1" step="1">
+              </div>
+            </div>
+          </details>
+        </div>
       </div>
       <div class="notice">Weekends are skipped for the two-portal rotation. Scrape All 15 is the daily safety net.</div>
     </aside>
@@ -695,6 +855,19 @@ HTML = r"""<!doctype html>
         start_at: Number($("startAt").value || 1),
         keep_open_minutes: Number($("keepOpen").value || 60),
         keywords: $("keywords").value.split(/\n+/).map((x) => x.trim()).filter(Boolean),
+        judge_apply: {
+          resume_path: $("judgeResume").value.trim(),
+          first_name: $("judgeFirst").value.trim(),
+          last_name: $("judgeLast").value.trim(),
+          email: $("judgeEmail").value.trim(),
+          phone: $("judgePhone").value.trim(),
+          country: $("judgeCountry").value.trim() || "United States",
+          street_address: $("judgeStreet").value.trim(),
+          city: $("judgeCity").value.trim(),
+          state: $("judgeState").value.trim(),
+          zip_code: $("judgeZip").value.trim(),
+          keep_open_seconds: Number($("judgeKeepOpen").value || 45),
+        },
       };
     }
 
@@ -713,6 +886,22 @@ HTML = r"""<!doctype html>
       $("startAt").value = state.config.start_at ?? 1;
       $("keepOpen").value = state.config.keep_open_minutes ?? 60;
       $("keywords").value = (state.config.keywords || []).join("\n");
+      const judge = state.config.judge_apply || {};
+      $("judgeResume").value = judge.resume_path || "resume.docx";
+      $("judgeFirst").value = judge.first_name || "";
+      $("judgeLast").value = judge.last_name || "";
+      $("judgeEmail").value = judge.email || "";
+      $("judgePhone").value = judge.phone || "";
+      $("judgeCountry").value = judge.country || "United States";
+      $("judgeStreet").value = judge.street_address || "";
+      $("judgeCity").value = judge.city || "";
+      $("judgeState").value = judge.state || "";
+      $("judgeZip").value = judge.zip_code || "";
+      $("judgeKeepOpen").value = judge.keep_open_seconds ?? 45;
+    }
+
+    function latestName(path) {
+      return path ? path.split("/").pop() : "";
     }
 
     function renderRotation() {
@@ -734,19 +923,31 @@ HTML = r"""<!doctype html>
       const validVendor = state.vendors.some((v) => v.slug === previousVendor);
       $("openVendor").value = validVendor ? previousVendor : (state.vendors[0]?.slug || "");
       state.selectedVendor = $("openVendor").value;
+      renderJudgePanel();
 
       $("vendors").innerHTML = state.vendors.map((v) => `
         <tr class="${v.active_today ? "active" : ""}">
           <td><input class="pick" type="checkbox" value="${v.slug}" ${(state.vendorChecksTouched ? state.checkedVendors.has(v.slug) : v.active_today) ? "checked" : ""}></td>
-          <td><strong>${v.label}</strong></td>
+          <td><span class="portal-name">${v.label}</span></td>
           <td>${v.active_today ? '<span class="pill active-pill">active</span>' : ""}</td>
-          <td class="${v.latest_count ? "" : "zero"}">${v.latest_count}</td>
-          <td>${v.latest_file ? `${v.latest_file}<br><span class="sub">${v.latest_modified}</span>` : '<span class="zero">No output yet</span>'}</td>
-          <td><button data-open="${v.slug}">Open</button></td>
+          <td class="${v.latest_count ? "" : "zero"}"><span class="job-count">${v.latest_count}</span></td>
+          <td class="output-cell" title="${v.latest_file || ""}">${v.latest_file ? `${latestName(v.latest_file)} · ${v.latest_modified}` : '<span class="zero">No output yet</span>'}</td>
+          <td>
+            <div class="button-row">
+              <button class="small" data-open="${v.slug}">Open</button>
+              ${v.slug === "judgegroup" ? '<button class="small secondary" data-judge-fill>Fill</button><button class="small danger" data-judge-submit>Submit</button>' : ""}
+            </div>
+          </td>
         </tr>
       `).join("");
       document.querySelectorAll("[data-open]").forEach((button) => {
         button.addEventListener("click", () => openPortal(button.dataset.open));
+      });
+      document.querySelectorAll("[data-judge-fill]").forEach((button) => {
+        button.addEventListener("click", () => judgeApply(false));
+      });
+      document.querySelectorAll("[data-judge-submit]").forEach((button) => {
+        button.addEventListener("click", () => judgeApply(true));
       });
       document.querySelectorAll(".pick").forEach((box) => {
         box.addEventListener("change", () => {
@@ -755,6 +956,10 @@ HTML = r"""<!doctype html>
         });
       });
       updateToggleAll();
+    }
+
+    function renderJudgePanel() {
+      $("judgePanel").classList.toggle("visible", state.selectedVendor === "judgegroup");
     }
 
     function renderRuns() {
@@ -815,6 +1020,18 @@ HTML = r"""<!doctype html>
       $("log").textContent = `Opening ${slug} jobs in the browser.`;
     }
 
+    async function judgeApply(submit) {
+      if (submit && !confirm("Submit the selected Judge Group application now?")) return;
+      await saveConfig();
+      const payload = {
+        submit,
+        start_at: Number($("startAt").value || 1),
+        keep_open_seconds: Number($("judgeKeepOpen").value || 45),
+      };
+      const data = await api("/api/judge-apply", { method: "POST", body: JSON.stringify(payload) });
+      $("log").textContent = `${submit ? "Submitting" : "Filling"} Judge Group application: ${data.title || data.job_url}`;
+    }
+
     $("save").addEventListener("click", saveConfig);
     $("refresh").addEventListener("click", refreshStatus);
     $("scrapeAll").addEventListener("click", () => scrape("all"));
@@ -831,9 +1048,12 @@ HTML = r"""<!doctype html>
       updateToggleAll();
     });
     $("openVendor").addEventListener("change", (event) => { state.selectedVendor = event.target.value; });
-    ["days", "openLimit", "startAt", "keepOpen", "keywords"].forEach((id) => {
+    $("openVendor").addEventListener("change", renderJudgePanel);
+    ["days", "openLimit", "startAt", "keepOpen", "keywords", "judgeResume", "judgeFirst", "judgeLast", "judgeEmail", "judgePhone", "judgeCountry", "judgeStreet", "judgeCity", "judgeState", "judgeZip", "judgeKeepOpen"].forEach((id) => {
       $(id).addEventListener("input", () => { state.configDirty = true; });
     });
+    $("judgeFill").addEventListener("click", () => judgeApply(false));
+    $("judgeSubmit").addEventListener("click", () => judgeApply(true));
     setInterval(refreshStatus, 5000);
     refresh().catch((error) => { $("log").textContent = error.message; });
 
