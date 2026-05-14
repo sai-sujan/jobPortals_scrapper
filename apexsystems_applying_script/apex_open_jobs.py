@@ -6,10 +6,10 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
+import webbrowser
 from pathlib import Path
 from typing import Any
-
-from playwright.sync_api import sync_playwright
 
 
 DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "output"
@@ -36,6 +36,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--limit", type=int, default=8)
     parser.add_argument("--start-at", type=int, default=1, help="1-based job index to start from.")
+    parser.add_argument("--delay", type=float, default=0.5, help="Seconds between opening each tab.")
+    parser.add_argument("--playwright", action="store_true", help="Open in a temporary Playwright Chrome window instead of the default browser.")
     parser.add_argument("--keep-open-minutes", type=int, default=120)
     parser.add_argument("--slow-mo", type=int, default=100)
     parser.add_argument("--browser-channel", default="chrome", help="Playwright browser channel to use. Defaults to Chrome.")
@@ -56,6 +58,22 @@ def main() -> int:
 
     print(f"Jobs file: {jobs_file}")
     print(f"Opening job posting tabs: {len(selected)}")
+
+    if not args.playwright:
+        for index, job in enumerate(selected, start=start + 1):
+            title = str(job.get("title") or "").strip()
+            job_url = str(job.get("job_url") or "").strip()
+            if not job_url:
+                print(f"[{index}] skipped, missing job_url: {title}", file=sys.stderr)
+                continue
+            print(f"[{index}/{len(jobs)}] {title}")
+            print(job_url)
+            webbrowser.open_new_tab(job_url)
+            time.sleep(args.delay)
+        print("Done.")
+        return 0
+
+    from playwright.sync_api import sync_playwright
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(channel=args.browser_channel, headless=False, slow_mo=args.slow_mo)
