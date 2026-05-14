@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import signal
 import subprocess
 import sys
 import threading
@@ -90,6 +92,9 @@ ROTATION_PAIRS = [
 
 RUN_LOCK = threading.Lock()
 RUNS: dict[str, dict[str, Any]] = {}
+PROCESS_LOCK = threading.Lock()
+ACTIVE_PROCESSES: dict[int, dict[str, Any]] = {}
+STOP_EVENT = threading.Event()
 
 
 def default_config() -> dict[str, Any]:
@@ -153,6 +158,49 @@ def normalize_keywords(value: Any) -> list[str]:
             seen.add(key)
             keywords.append(keyword)
     return keywords or DEFAULT_KEYWORDS[:]
+
+
+def register_process(proc: subprocess.Popen[Any], kind: str, label: str) -> None:
+    with PROCESS_LOCK:
+        ACTIVE_PROCESSES[proc.pid] = {
+            "pid": proc.pid,
+            "kind": kind,
+            "label": label,
+            "started_at": datetime.now().isoformat(timespec="seconds"),
+        }
+
+
+def unregister_process(pid: int) -> None:
+    with PROCESS_LOCK:
+        ACTIVE_PROCESSES.pop(pid, None)
+
+
+def launch_process(cmd: list[str], kind: str, label: str, **kwargs: Any) -> subprocess.Popen[Any]:
+    proc = subprocess.Popen(cmd, start_new_session=True, **kwargs)
+    register_process(proc, kind, label)
+    return proc
+
+
+def active_processes() -> list[dict[str, Any]]:
+    with PROCESS_LOCK:
+        return list(ACTIVE_PROCESSES.values())
+
+
+def stop_active_processes() -> dict[str, Any]:
+    STOP_EVENT.set()
+    processes = active_processes()
+    stopped: list[dict[str, Any]] = []
+    for info in processes:
+        pid = int(info["pid"])
+        try:
+            os.killpg(pid, signal.SIGTERM)
+            stopped.append(info)
+        except ProcessLookupError:
+            unregister_process(pid)
+        except OSError as exc:
+            info["error"] = str(exc)
+            stopped.append(info)
+    return {"stopped": stopped, "count": len(stopped)}
 
 
 def nth_workday_index(today: date | None = None) -> int:
@@ -349,6 +397,7 @@ def opener_help(vendor: Vendor) -> str:
 
 
 def start_run(kind: str, vendor_slugs: list[str], config: dict[str, Any]) -> str:
+    STOP_EVENT.clear()
     run_id = datetime.now().strftime("%Y%m%d%H%M%S")
     RUNS[run_id] = {
         "id": run_id,
@@ -367,6 +416,8 @@ def start_run(kind: str, vendor_slugs: list[str], config: dict[str, Any]) -> str
 
 def run_scrapers(run_id: str, vendor_slugs: list[str], config: dict[str, Any]) -> None:
     for slug in vendor_slugs:
+        if STOP_EVENT.is_set():
+            break
         vendor = VENDOR_BY_SLUG[slug]
         step_started = datetime.now()
         step = {
@@ -384,19 +435,49 @@ def run_scrapers(run_id: str, vendor_slugs: list[str], config: dict[str, Any]) -
         before = latest_jobs_file(vendor)
         cmd = command_for_scrape(vendor, config)
         try:
-            proc = subprocess.run(cmd, cwd=ROOT, text=True, capture_output=True, timeout=900)
+            proc = launch_process(
+                cmd,
+                "scrape",
+                f"Scrape {vendor.label}",
+                cwd=ROOT,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            try:
+                stdout, stderr = proc.communicate(timeout=900)
+            finally:
+                unregister_process(proc.pid)
             step_finished = datetime.now()
             after = latest_jobs_file(vendor)
             status = vendor_status(vendor)
-            output = (proc.stdout + "\n" + proc.stderr).strip()
+            output = ((stdout or "") + "\n" + (stderr or "")).strip()
+            stopped = STOP_EVENT.is_set() and proc.returncode and proc.returncode < 0
             step.update({
-                "status": "done" if proc.returncode == 0 else "failed",
+                "status": "stopped" if stopped else ("done" if proc.returncode == 0 else "failed"),
                 "returncode": proc.returncode,
                 "count": status["latest_count"] if proc.returncode == 0 else 0,
                 "latest_file": status["latest_file"],
                 "changed": str(before) != str(after),
                 "output": output[-5000:],
                 "summary": summarize_scraper_output(output),
+                "finished_at": step_finished.isoformat(timespec="seconds"),
+                "duration_seconds": round((step_finished - step_started).total_seconds(), 1),
+            })
+            if STOP_EVENT.is_set():
+                break
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(proc.pid, signal.SIGTERM)
+            except OSError:
+                pass
+            unregister_process(proc.pid)
+            step_finished = datetime.now()
+            step.update({
+                "status": "failed",
+                "output": "Timed out after 900 seconds.",
+                "summary": "Timed out after 900 seconds.",
+                "returncode": -1,
                 "finished_at": step_finished.isoformat(timespec="seconds"),
                 "duration_seconds": round((step_finished - step_started).total_seconds(), 1),
             })
@@ -410,7 +491,10 @@ def run_scrapers(run_id: str, vendor_slugs: list[str], config: dict[str, Any]) -
                 "finished_at": step_finished.isoformat(timespec="seconds"),
                 "duration_seconds": round((step_finished - step_started).total_seconds(), 1),
             })
-    RUNS[run_id]["status"] = "done" if all(step["status"] == "done" for step in RUNS[run_id]["steps"]) else "failed"
+    if STOP_EVENT.is_set():
+        RUNS[run_id]["status"] = "stopped"
+    else:
+        RUNS[run_id]["status"] = "done" if all(step["status"] == "done" for step in RUNS[run_id]["steps"]) else "failed"
     RUNS[run_id]["finished_at"] = datetime.now().isoformat(timespec="seconds")
 
 
@@ -427,10 +511,19 @@ def summarize_scraper_output(output: str) -> str:
 
 
 def open_vendor(slug: str, config: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    STOP_EVENT.clear()
     vendor = VENDOR_BY_SLUG[slug]
     cmd = command_for_open(vendor, config, payload)
-    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    proc = launch_process(cmd, "open", f"Open {vendor.label}", cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    threading.Thread(target=watch_process, args=(proc,), daemon=True).start()
     return {"status": "started", "pid": proc.pid, "vendor": vendor.label}
+
+
+def watch_process(proc: subprocess.Popen[Any]) -> None:
+    try:
+        proc.wait()
+    finally:
+        unregister_process(proc.pid)
 
 
 def open_job(slug: str, key: str) -> dict[str, Any]:
@@ -468,23 +561,27 @@ def set_applied_mark(slug: str, key: str, applied: bool) -> dict[str, Any]:
 
 
 def start_judge_apply(config: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    STOP_EVENT.clear()
     vendor = VENDOR_BY_SLUG["judgegroup"]
     jobs = load_latest_jobs(vendor)
     start_at = max(int(payload.get("start_at") or config.get("start_at") or 1), 1)
-    selected = jobs[start_at - 1] if start_at - 1 < len(jobs) else None
-    if not selected:
+    limit = int(payload.get("limit") or config.get("open_limit") or 1)
+    selected_jobs = jobs[start_at - 1 :]
+    if limit > 0:
+        selected_jobs = selected_jobs[:limit]
+    selected_jobs = [job for job in selected_jobs if str(job.get("job_url") or job.get("apply_url") or "").strip()]
+    if not selected_jobs:
         raise ValueError(f"No Judge Group job found at position {start_at}")
-    job_url = str(selected.get("job_url") or selected.get("apply_url") or "").strip()
-    if not job_url:
-        raise ValueError(f"Judge Group job at position {start_at} has no URL")
 
     apply_config = config.get("judge_apply") if isinstance(config.get("judge_apply"), dict) else {}
     script = ROOT / vendor.folder / "judgegroup_apply.py"
     cmd = [
         PYTHON,
         str(script),
-        "--url",
-        job_url,
+        "--start-at",
+        str(start_at),
+        "--limit",
+        str(limit),
         "--resume",
         str(apply_config.get("resume_path") or "resume.docx"),
         "--first-name",
@@ -510,17 +607,23 @@ def start_judge_apply(config: dict[str, Any], payload: dict[str, Any]) -> dict[s
     ]
     if payload.get("submit"):
         cmd.append("--submit")
-    proc = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    key = job_key(vendor.slug, selected)
+    proc = launch_process(cmd, "apply", "Judge Group apply", cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    threading.Thread(target=watch_process, args=(proc,), daemon=True).start()
+    keys = [job_key(vendor.slug, selected) for selected in selected_jobs]
     if payload.get("submit"):
-        set_applied_mark(vendor.slug, key, True)
+        for key in keys:
+            set_applied_mark(vendor.slug, key, True)
     return {
         "status": "started",
         "pid": proc.pid,
         "vendor": vendor.label,
-        "title": str(selected.get("title") or ""),
-        "job_url": job_url,
-        "job_key": key,
+        "title": str(selected_jobs[0].get("title") or ""),
+        "job_url": str(selected_jobs[0].get("job_url") or selected_jobs[0].get("apply_url") or ""),
+        "job_key": keys[0],
+        "count": len(selected_jobs),
+        "job_keys": keys,
+        "start_at": start_at,
+        "limit": limit,
         "submit": bool(payload.get("submit")),
     }
 
@@ -533,7 +636,13 @@ class Handler(BaseHTTPRequestHandler):
         elif parsed.path == "/api/config":
             self.send_json({"config": load_config(), "vendors": [vendor_status(v) for v in VENDORS], "rotation": rotation_preview()})
         elif parsed.path == "/api/status":
-            self.send_json({"runs": list(RUNS.values())[-10:], "vendors": [vendor_status(v) for v in VENDORS], "rotation": rotation_preview()})
+            self.send_json({
+                "runs": list(RUNS.values())[-10:],
+                "vendors": [vendor_status(v) for v in VENDORS],
+                "rotation": rotation_preview(),
+                "active_processes": active_processes(),
+                "stop_requested": STOP_EVENT.is_set(),
+            })
         elif parsed.path == "/api/jobs":
             query = urllib.parse.parse_qs(parsed.query)
             slug = str((query.get("vendor") or [""])[0])
@@ -590,6 +699,10 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as exc:  # noqa: BLE001
                 self.send_json({"ok": False, "error": str(exc)}, status=500)
                 return
+            self.send_json({"ok": True, **result})
+            return
+        if self.path == "/api/stop":
+            result = stop_active_processes()
             self.send_json({"ok": True, **result})
             return
         if self.path == "/api/open-job":
@@ -783,6 +896,7 @@ HTML = r"""<!doctype html>
       font-size: 12px;
     }
     .active-pill { background: #cdeedb; color: #075f3e; }
+    .stop-pill { background: #f3d6d6; color: #7a2020; }
     .zero { color: var(--muted); }
     .log {
       margin-top: 18px;
@@ -885,6 +999,7 @@ HTML = r"""<!doctype html>
     <div class="buttons">
       <button class="primary" id="scrapeAll">Scrape All 15</button>
       <button class="secondary" id="scrapeToday">Scrape Today's 2</button>
+      <button class="danger" id="stopAll">Stop</button>
       <button id="refresh">Refresh</button>
     </div>
   </header>
@@ -935,7 +1050,7 @@ HTML = r"""<!doctype html>
         <div class="judge-panel" id="judgePanel">
           <h3>Judge Group Apply</h3>
           <div class="buttons">
-            <button class="secondary" id="judgeFill">Fill & Submit Latest</button>
+            <button class="secondary" id="judgeFill">Fill & Submit Queue</button>
           </div>
           <details>
             <summary>Applicant Settings</summary>
@@ -1043,6 +1158,8 @@ HTML = r"""<!doctype html>
       vendorChecksTouched: false,
       portalJobs: [],
       jobsMeta: {},
+      stopRequested: false,
+      activeProcesses: [],
     };
     const $ = (id) => document.getElementById(id);
 
@@ -1162,7 +1279,7 @@ HTML = r"""<!doctype html>
           <td>
             <div class="button-row">
               <button class="small" data-open="${v.slug}">Open</button>
-              ${v.slug === "judgegroup" ? '<button class="small secondary" data-judge-fill>Fill & Submit Latest</button>' : ""}
+              ${v.slug === "judgegroup" ? '<button class="small secondary" data-judge-fill>Fill & Submit Queue</button>' : ""}
             </div>
           </td>
         </tr>
@@ -1231,7 +1348,9 @@ HTML = r"""<!doctype html>
 
     function renderRuns() {
       const latest = state.runs[state.runs.length - 1];
-      $("runState").textContent = latest ? latest.status : "idle";
+      const activeCount = state.activeProcesses.length;
+      $("runState").textContent = activeCount ? `${activeCount} running` : (latest ? latest.status : "idle");
+      $("runState").classList.toggle("stop-pill", state.stopRequested);
       if (!latest) return;
       const freshNote = latest.kind === "today" ? "Fresh scrape from page/API start for today's 2 portals" : "Fresh scrape run";
       const lines = [`Run ${latest.id} - ${latest.kind} - ${latest.status}`, freshNote];
@@ -1260,6 +1379,8 @@ HTML = r"""<!doctype html>
       state.runs = data.runs || [];
       state.vendors = data.vendors || [];
       state.rotation = data.rotation || [];
+      state.activeProcesses = data.active_processes || [];
+      state.stopRequested = Boolean(data.stop_requested);
       renderRotation();
       renderVendors();
       await loadSelectedJobs();
@@ -1285,6 +1406,7 @@ HTML = r"""<!doctype html>
     }
 
     async function scrape(mode, vendors = []) {
+      state.stopRequested = false;
       await saveConfig();
       await api("/api/scrape", { method: "POST", body: JSON.stringify({ mode, vendors }) });
       $("log").textContent = mode === "today"
@@ -1300,6 +1422,7 @@ HTML = r"""<!doctype html>
     }
 
     async function openPortal(slug) {
+      state.stopRequested = false;
       await saveConfig();
       const payload = { vendor: slug, limit: Number($("openLimit").value || 0), start_at: Number($("startAt").value || 1), keep_open_minutes: Number($("keepOpen").value || 60) };
       await api("/api/open", { method: "POST", body: JSON.stringify(payload) });
@@ -1318,25 +1441,41 @@ HTML = r"""<!doctype html>
     }
 
     async function judgeApply() {
+      state.stopRequested = false;
       await saveConfig();
       const payload = {
         submit: true,
-        start_at: 1,
+        start_at: Number($("startAt").value || 1),
+        limit: Number($("openLimit").value || 1),
         keep_open_seconds: Number($("judgeKeepOpen").value || 45),
       };
       const data = await api("/api/judge-apply", { method: "POST", body: JSON.stringify(payload) });
-      $("log").textContent = `Filling and submitting latest Judge Group application: ${data.title || data.job_url}`;
+      $("log").textContent = `Filling and submitting ${data.count || 1} Judge Group application(s), starting at #${data.start_at || payload.start_at}.`;
       await loadSelectedJobs();
+    }
+
+    async function stopAll() {
+      state.stopRequested = true;
+      const data = await api("/api/stop", { method: "POST", body: JSON.stringify({}) });
+      $("log").textContent = data.count
+        ? `Stop requested. Terminated ${data.count} running process(es). Already opened browser tabs may remain open.`
+        : "Stop requested. No running dashboard processes were found.";
+      await refreshStatus();
     }
 
     $("save").addEventListener("click", saveConfig);
     $("refresh").addEventListener("click", refreshStatus);
+    $("stopAll").addEventListener("click", stopAll);
     $("scrapeAll").addEventListener("click", () => scrape("all"));
     $("scrapeToday").addEventListener("click", () => scrape("today"));
     $("scrapeSelected").addEventListener("click", () => scrape("selected", selectedVendors()));
     $("openSelected").addEventListener("click", () => openPortal($("openVendor").value));
     $("openToday").addEventListener("click", async () => {
-      for (const vendor of state.vendors.filter((v) => v.active_today)) await openPortal(vendor.slug);
+      state.stopRequested = false;
+      for (const vendor of state.vendors.filter((v) => v.active_today)) {
+        if (state.stopRequested) break;
+        await openPortal(vendor.slug);
+      }
     });
     $("toggleAll").addEventListener("change", (event) => {
       state.vendorChecksTouched = true;
