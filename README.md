@@ -66,6 +66,13 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
+Or use the setup script:
+
+```bash
+./scripts/setup_env.sh
+source .venv/bin/activate
+```
+
 Optional browser support:
 
 ```bash
@@ -129,8 +136,44 @@ The dashboard lets you:
 - edit the search keywords
 - open the latest filtered jobs for one portal
 - open the two portals assigned for today's applying rotation
+- track temporary applied marks and per-day open counts in the job list
+- fill and submit the filtered Judge Group queue when applicant settings are configured
 
 Dashboard settings are saved locally in `job_portal_dashboard_config.json`. That file is ignored by git so each user can keep their own keyword list and controls.
+
+## Docker
+
+Docker gives a clean, repeatable environment for anyone who clones the repo.
+
+Build and run the dashboard:
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+```bash
+open http://127.0.0.1:8766
+```
+
+On Windows/Linux, open that URL manually in your browser.
+
+Docker runtime state is stored in `docker_state/`, and scraper outputs are bind-mounted into each portal's `output/` folder. Those paths are ignored by git.
+
+Useful commands:
+
+```bash
+make docker-up
+make docker-logs
+make docker-down
+```
+
+Notes:
+
+- Scraping works inside Docker.
+- Browser-opening helpers run inside the container, so local desktop browser tab opening is best from the normal local `.venv` workflow.
+- Playwright Chromium is installed in the Docker image for scripts that need browser automation.
 
 ## macOS Desktop Launcher
 
@@ -270,7 +313,7 @@ python3 judgegroup_applying_script/judgegroup_scraper.py --help
 
 ## Website Usage Notes
 
-This project reads public job pages, feeds, or public API responses and writes local filtered results. It does not submit applications automatically from the dashboard.
+This project reads public job pages, feeds, or public API responses and writes local filtered results. The dashboard does not submit applications unless you explicitly click an apply automation control and provide applicant settings.
 
 Use it respectfully:
 
@@ -280,7 +323,16 @@ Use it respectfully:
 - respect each website's terms of use
 - avoid scraping portals more often than needed
 
-The open scripts are only helpers that open job pages or apply pages in a browser. You still review and submit applications manually.
+Most open scripts are only helpers that open job pages in a browser. Judge Group also has an optional fill-and-submit queue from the dashboard when you configure applicant settings. Use that only for jobs you intend to apply to.
+
+## CI
+
+GitHub Actions runs on pushes and pull requests:
+
+- install Python dependencies
+- compile Python files
+- run `PYTHONPATH=src pytest -q`
+- build the Docker image
 
 ## Legacy Job Checker
 

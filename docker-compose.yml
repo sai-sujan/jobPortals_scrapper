@@ -1,0 +1,34 @@
+services:
+  dashboard:
+    build: .
+    image: job-portals-scraper:local
+    environment:
+      JOB_DASHBOARD_CONFIG_PATH: /app/state/job_portal_dashboard_config.json
+      JOB_DASHBOARD_APPLIED_PATH: /app/state/job_portal_dashboard_applied.json
+      JOB_DASHBOARD_CLICKS_PATH: /app/state/job_portal_dashboard_clicks.json
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      KFORCE_AZURE_SEARCH_KEY: ${KFORCE_AZURE_SEARCH_KEY:-}
+      JOB_PORTAL_RESUME: ${JOB_PORTAL_RESUME:-}
+    ports:
+      - "8766:8766"
+    volumes:
+      - ./docker_state:/app/state
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./reports:/app/reports
+      - ./teksystems_applying_script/output:/app/teksystems_applying_script/output
+      - ./apexsystems_applying_script/output:/app/apexsystems_applying_script/output
+      - ./judgegroup_applying_script/output:/app/judgegroup_applying_script/output
+      - ./beaconhill_applying_script/output:/app/beaconhill_applying_script/output
+      - ./akkodis_applying_script/output:/app/akkodis_applying_script/output
+      - ./randstad_applying_script/output:/app/randstad_applying_script/output
+      - ./eliassen_applying_script/output:/app/eliassen_applying_script/output
+      - ./experis_applying_script/output:/app/experis_applying_script/output
+      - ./brooksource_applying_script/output:/app/brooksource_applying_script/output
+      - ./kellymitchell_applying_script/output:/app/kellymitchell_applying_script/output
+      - ./mitchellmartin_applying_script/output:/app/mitchellmartin_applying_script/output
+      - ./cbts_applying_script/output:/app/cbts_applying_script/output
+      - ./roberthalf_applying_script/output:/app/roberthalf_applying_script/output
+      - ./kforce_applying_script/output:/app/kforce_applying_script/output
+      - ./insightglobal_applying_script/output:/app/insightglobal_applying_script/output
+    restart: unless-stopped

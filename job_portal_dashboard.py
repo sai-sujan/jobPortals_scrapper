@@ -22,8 +22,9 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent
-CONFIG_PATH = ROOT / "job_portal_dashboard_config.json"
-APPLIED_PATH = ROOT / "job_portal_dashboard_applied.json"
+CONFIG_PATH = Path(os.environ.get("JOB_DASHBOARD_CONFIG_PATH", ROOT / "job_portal_dashboard_config.json")).expanduser()
+APPLIED_PATH = Path(os.environ.get("JOB_DASHBOARD_APPLIED_PATH", ROOT / "job_portal_dashboard_applied.json")).expanduser()
+CLICKS_PATH = Path(os.environ.get("JOB_DASHBOARD_CLICKS_PATH", ROOT / "job_portal_dashboard_clicks.json")).expanduser()
 APPLIED_TTL_SECONDS = 2 * 60 * 60
 PYTHON = sys.executable or "python3"
 
@@ -139,6 +140,7 @@ def save_config(config: dict[str, Any]) -> None:
     clean = default_config()
     clean.update(config)
     clean["keywords"] = normalize_keywords(clean.get("keywords"))
+    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
     CONFIG_PATH.write_text(json.dumps(clean, indent=2), encoding="utf-8")
 
 
@@ -292,14 +294,47 @@ def load_applied_marks() -> dict[str, dict[str, Any]]:
 
 
 def save_applied_marks(marks: dict[str, dict[str, Any]]) -> None:
+    APPLIED_PATH.parent.mkdir(parents=True, exist_ok=True)
     APPLIED_PATH.write_text(json.dumps(marks, indent=2, sort_keys=True), encoding="utf-8")
 
 
-def format_job_for_ui(vendor: Vendor, job: dict[str, Any], index: int, marks: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def load_click_counts() -> dict[str, dict[str, Any]]:
+    today = date.today().isoformat()
+    if not CLICKS_PATH.exists():
+        return {}
+    try:
+        data = json.loads(CLICKS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return {k: v for k, v in data.items() if isinstance(v, dict) and v.get("date") == today}
+
+
+def save_click_counts(counts: dict[str, dict[str, Any]]) -> None:
+    CLICKS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CLICKS_PATH.write_text(json.dumps(counts, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def increment_click(key: str) -> int:
+    today = date.today().isoformat()
+    counts = load_click_counts()
+    entry = counts.get(key)
+    if entry and entry.get("date") == today:
+        entry["count"] = int(entry.get("count") or 0) + 1
+    else:
+        entry = {"date": today, "count": 1}
+    counts[key] = entry
+    save_click_counts(counts)
+    return int(entry["count"])
+
+
+def format_job_for_ui(vendor: Vendor, job: dict[str, Any], index: int, marks: dict[str, dict[str, Any]], clicks: dict[str, dict[str, Any]]) -> dict[str, Any]:
     key = job_key(vendor.slug, job)
     mark = marks.get(key) or {}
     marked_at = float(mark.get("marked_at") or 0)
     expires_at = marked_at + APPLIED_TTL_SECONDS if marked_at else 0
+    click_entry = clicks.get(key) or {}
     return {
         "key": key,
         "index": index,
@@ -314,6 +349,7 @@ def format_job_for_ui(vendor: Vendor, job: dict[str, Any], index: int, marks: di
         "marked_at": datetime.fromtimestamp(marked_at).isoformat(timespec="seconds") if marked_at else "",
         "expires_at": datetime.fromtimestamp(expires_at).isoformat(timespec="seconds") if expires_at else "",
         "seconds_left": max(int(expires_at - time.time()), 0) if expires_at else 0,
+        "open_count": int(click_entry.get("count") or 0),
     }
 
 
@@ -326,7 +362,8 @@ def latest_jobs_for_ui(slug: str, config: dict[str, Any], payload: dict[str, Any
     if limit > 0:
         selected = selected[:limit]
     marks = load_applied_marks()
-    rows = [format_job_for_ui(vendor, job, start_at + offset, marks) for offset, job in enumerate(selected)]
+    clicks = load_click_counts()
+    rows = [format_job_for_ui(vendor, job, start_at + offset, marks, clicks) for offset, job in enumerate(selected)]
     return {"vendor": vendor.label, "jobs": rows, "total": len(jobs), "start_at": start_at, "limit": limit}
 
 
@@ -535,7 +572,8 @@ def open_job(slug: str, key: str) -> dict[str, Any]:
             if not url:
                 raise ValueError("Selected job has no URL.")
             webbrowser.open_new_tab(url)
-            return {"status": "started", "vendor": vendor.label, "title": str(job.get("title") or ""), "job_url": url}
+            count = increment_click(key)
+            return {"status": "started", "vendor": vendor.label, "title": str(job.get("title") or ""), "job_url": url, "open_count": count}
     raise ValueError("Selected job was not found in the latest output.")
 
 
@@ -981,6 +1019,21 @@ HTML = r"""<!doctype html>
     .applied-pill { background: #d7f0df; color: #0b5b3b; }
     .not-applied-pill { background: #eef1f4; color: #53606b; }
     .empty-state { padding: 14px 12px; color: var(--muted); font-size: 13px; }
+    .click-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: #f0a500;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
     @media (max-width: 980px) {
       header { align-items: start; flex-direction: column; }
       main { grid-template-columns: 1fr; }
@@ -1328,7 +1381,7 @@ HTML = r"""<!doctype html>
             </div>
             <div>${applied}</div>
             <div class="button-row">
-              <button class="small" data-open-job="${escapeHtml(job.key)}">Open</button>
+              <button class="small" data-open-job="${escapeHtml(job.key)}">Open${job.open_count > 0 ? `<span class="click-badge">${job.open_count}</span>` : ""}</button>
               <button class="small secondary" data-mark-applied="${escapeHtml(job.key)}">Mark Applied</button>
               <button class="small" data-clear-applied="${escapeHtml(job.key)}">Clear</button>
             </div>
@@ -1431,7 +1484,8 @@ HTML = r"""<!doctype html>
 
     async function openSingleJob(key) {
       const data = await api("/api/open-job", { method: "POST", body: JSON.stringify({ vendor: state.selectedVendor, key }) });
-      $("log").textContent = `Opening ${data.title || data.job_url} in the browser.`;
+      $("log").textContent = `Opening ${data.title || data.job_url} in the browser. (opened ${data.open_count || 1}x today)`;
+      await loadSelectedJobs();
     }
 
     async function markApplied(key, applied) {
