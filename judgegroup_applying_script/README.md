@@ -52,4 +52,10 @@ Fill and submit:
 python3 judgegroup_apply.py --url "https://www.judge.com/jobs/details/1132024/" --resume /path/to/resume.docx --first-name Jane --last-name Candidate --email jane@example.com --phone 5551234567 --street-address "City center" --city "Jersey City" --state NJ --zip-code 08540 --submit --keep-open-seconds 20
 ```
 
+Fill and submit multiple jobs from the newest scraper output:
+
+```bash
+python3 judgegroup_apply.py --start-at 1 --limit 5 --submit
+```
+
 Outputs are written to `output/`.

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -16,6 +17,7 @@ from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, sy
 
 DEFAULT_JOB_URL = "https://www.judge.com/jobs/details/1132024/"
 DEFAULT_RESUME = Path(os.environ.get("JOB_PORTAL_RESUME", "resume.docx")).expanduser()
+DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "output"
 
 
 @dataclass(frozen=True)
@@ -29,6 +31,41 @@ class Applicant:
     city: str = "Jersey City"
     state: str = "NJ"
     zip_code: str = "08540"
+
+
+def latest_jobs_file(output_dir: Path) -> Path:
+    files = sorted(output_dir.glob("judgegroup_jobs_*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
+    if not files:
+        raise FileNotFoundError(f"No judgegroup_jobs_*.json files found in {output_dir}")
+    return files[0]
+
+
+def load_jobs(path: Path) -> list[dict[str, object]]:
+    with path.open(encoding="utf-8") as handle:
+        jobs = json.load(handle)
+    if not isinstance(jobs, list):
+        raise ValueError(f"Expected a list of jobs in {path}")
+    return [job for job in jobs if isinstance(job, dict)]
+
+
+def selected_jobs(args: argparse.Namespace) -> list[tuple[int, str, str]]:
+    if args.url:
+        return [(1, args.url, args.url)]
+
+    jobs_file = args.jobs_file or latest_jobs_file(args.out_dir)
+    jobs = load_jobs(jobs_file)
+    start = max(args.start_at - 1, 0)
+    selected = jobs[start:]
+    if args.limit > 0:
+        selected = selected[: args.limit]
+
+    targets: list[tuple[int, str, str]] = []
+    for offset, job in enumerate(selected, start=start + 1):
+        url = str(job.get("job_url") or job.get("apply_url") or "").strip()
+        title = str(job.get("title") or url).strip()
+        if url:
+            targets.append((offset, title, url))
+    return targets
 
 
 def close_cookie_banner(page: Page) -> None:
@@ -109,7 +146,11 @@ def submission_status(page: Page) -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fill a Judge Group job application in Chrome.")
-    parser.add_argument("--url", default=DEFAULT_JOB_URL, help="Judge Group job details URL.")
+    parser.add_argument("--url", help="One Judge Group job details URL. If omitted, uses --jobs-file/latest output.")
+    parser.add_argument("--jobs-file", type=Path, help="Filtered judgegroup_jobs_*.json file. Defaults to latest output.")
+    parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--limit", type=int, default=0, help="Number of jobs to process when --url is omitted. 0 = all.")
+    parser.add_argument("--start-at", type=int, default=1, help="1-based job index to start from when --url is omitted.")
     parser.add_argument("--resume", type=Path, default=DEFAULT_RESUME)
     parser.add_argument("--first-name", default=Applicant.first_name)
     parser.add_argument("--last-name", default=Applicant.last_name)
@@ -174,35 +215,58 @@ def main() -> int:
         zip_code=args.zip_code,
     )
 
-    print(f"Opening Chrome: {args.url}")
+    targets = selected_jobs(args)
+    if not targets:
+        print("No Judge Group jobs selected.", file=sys.stderr)
+        return 2
+
+    print(f"Selected jobs: {len(targets)}")
     print(f"Resume: {resume_path}")
     print("Mode: submit" if args.submit else "Mode: fill only")
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(channel=args.browser_channel, headless=False, slow_mo=args.slow_mo)
         context = browser.new_context(accept_downloads=True)
-        page = context.new_page()
+        first_page = context.new_page()
+        failures = 0
         try:
-            page.goto(args.url, wait_until="domcontentloaded", timeout=45000)
-            page.wait_for_timeout(2500)
-            fill_application(page, applicant, resume_path)
-            print("Filled application fields and attached resume.")
+            for target_index, (job_number, title, url) in enumerate(targets, start=1):
+                page = first_page if target_index == 1 else context.new_page()
+                try:
+                    print(f"\n[{target_index}/{len(targets)}] Opening Chrome: {url}")
+                    print(f"Job #{job_number}: {title}")
+                    page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                    page.wait_for_timeout(2500)
+                    fill_application(page, applicant, resume_path)
+                    print("Filled application fields and attached resume.")
 
-            if args.submit:
-                submit_application(page)
-                print("Clicked Submit Application.")
-                print(f"Post-submit status: {submission_status(page)}")
-            else:
-                print("Submit was not clicked. Re-run with --submit to submit automatically.")
+                    if args.submit:
+                        submit_application(page)
+                        print("Clicked Submit Application.")
+                        print(f"Post-submit status: {submission_status(page)}")
+                    else:
+                        print("Submit was not clicked. Re-run with --submit to submit automatically.")
+                except Exception as exc:  # noqa: BLE001 - keep queue moving and report the bad job.
+                    failures += 1
+                    print(f"Failed job #{job_number}: {title}: {exc}", file=sys.stderr)
+                finally:
+                    current_screenshot = screenshot_path
+                    if len(targets) > 1:
+                        current_screenshot = screenshot_path.with_name(
+                            f"{screenshot_path.stem}_{job_number:03d}{screenshot_path.suffix}"
+                        )
+                    try:
+                        page.screenshot(path=str(current_screenshot), full_page=True)
+                        print(f"Screenshot: {current_screenshot}")
+                    except Exception as exc:  # noqa: BLE001
+                        print(f"Screenshot failed for job #{job_number}: {exc}", file=sys.stderr)
 
-            page.screenshot(path=str(screenshot_path), full_page=True)
-            print(f"Screenshot: {screenshot_path}")
             page.wait_for_timeout(max(args.keep_open_seconds, 1) * 1000)
         finally:
             context.close()
             browser.close()
 
-    return 0
+    return 1 if failures else 0
 
 
 if __name__ == "__main__":
